@@ -15,16 +15,28 @@ body{
 
 .container{ padding:6px; }
 
-/* 顶部 */
+/* ✅ 顶部（已优化） */
 .summary{
   display:flex;
   background:#fff;
   border-radius:8px;
-  padding:6px;
+  padding:10px 6px;
   margin-bottom:6px;
+  align-items:center;
 }
-.summary div{ flex:1; text-align:center; }
-.summary span{ display:block; font-weight:bold; }
+
+.summary div{
+  flex:1;
+  text-align:center;
+  font-size:14px;
+}
+
+.summary span{
+  display:block;
+  font-weight:bold;
+  font-size:18px;
+  margin-top:2px;
+}
 
 /* 按钮 */
 .btn-row{
@@ -49,7 +61,7 @@ table{
   table-layout:fixed;
 }
 
-/* ✅ 列宽（关键修复） */
+/* 列宽 */
 th:nth-child(1), td:nth-child(1){ width:22%; }
 th:nth-child(2), td:nth-child(2){ width:11%; }
 th:nth-child(3), td:nth-child(3){ width:11%; }
@@ -106,7 +118,7 @@ input{
   <div>持仓<span id="sumHolding">0</span></div>
   <div>收益<span id="sumProfit">0</span></div>
   <div>
-    T+<input id="tDays" value="3" style="width:40px">金额
+    T+<input id="tDays" value="3" style="width:50px;font-size:14px;text-align:center;">金额
     <span id="sumT">0</span>
   </div>
 </div>
