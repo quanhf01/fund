@@ -15,7 +15,6 @@ body {
 }
 
 .container {
-  max-width: 100%;
   padding: 4px;
 }
 
@@ -56,20 +55,19 @@ table {
   background: white;
 }
 
-/* 列宽（核心优化） */
-th:nth-child(1), td:nth-child(1) { width: 80px; }   /* 日期 */
-th:nth-child(2), td:nth-child(2) { width: 45px; }   /* 预估 */
-th:nth-child(3), td:nth-child(3) { width: 45px; }   /* 实际 */
-th:nth-child(4), td:nth-child(4) { width: 60px; }   /* 持仓 */
-th:nth-child(5), td:nth-child(5) { width: 60px; }   /* 收益 */
-th:nth-child(6), td:nth-child(6) { width: 55px; }   /* 操作 */
-th:nth-child(7), td:nth-child(7) { width: 70px; }   /* 最终 */
-th:nth-child(8), td:nth-child(8) { width: 40px; }   /* 删除 */
+/* 列宽优化 */
+th:nth-child(1), td:nth-child(1) { width: 80px; }
+th:nth-child(2), td:nth-child(2) { width: 45px; }
+th:nth-child(3), td:nth-child(3) { width: 45px; }
+th:nth-child(4), td:nth-child(4) { width: 60px; }
+th:nth-child(5), td:nth-child(5) { width: 60px; }
+th:nth-child(6), td:nth-child(6) { width: 55px; }
+th:nth-child(7), td:nth-child(7) { width: 70px; }
+th:nth-child(8), td:nth-child(8) { width: 40px; }
 
 th {
   background: #eee;
   padding: 3px;
-  font-weight: normal;
 }
 
 td {
@@ -77,7 +75,6 @@ td {
   text-align: center;
 }
 
-/* 输入框紧凑 */
 input {
   width: 100%;
   font-size: 10px;
@@ -85,12 +82,10 @@ input {
   box-sizing: border-box;
 }
 
-/* 日期更小 */
 .dateInput {
   font-size: 9px;
 }
 
-/* 删除按钮 */
 .delBtn {
   background: #ff4d4f;
   color: white;
@@ -110,7 +105,7 @@ input {
   <div>持仓<span id="sumHolding">0</span></div>
   <div>累计收益<span id="sumProfit">0</span></div>
   <div>
-    T+<input id="tDays" value="30" style="width:35px" onchange="calculate()">金额
+    T+<input id="tDays" value="7" style="width:35px" onchange="calculate()">金额
     <span id="sumT">0</span>
   </div>
 </div>
@@ -139,11 +134,6 @@ input {
 <script>
 
 let rows = JSON.parse(localStorage.getItem("rows") || "[]");
-
-function formatDate(d) {
-  if (!d) return "";
-  return d.slice(5); // ✅ 只显示 MM-DD
-}
 
 function addRow() {
   let prev = rows.length ? Number(rows[rows.length - 1].final) : 10000;
@@ -175,6 +165,7 @@ function calculate() {
 
   let totalProfit = 0;
 
+  // ✅ 主账户计算（不变）
   for (let i = 0; i < rows.length; i++) {
 
     if (i > 0) {
@@ -193,22 +184,26 @@ function calculate() {
     totalProfit += profit;
   }
 
-  let last = rows[rows.length - 1] || {};
-  let tDays = Number(document.getElementById("tDays").value) || 30;
-
+  // ✅ T+资金（独立逻辑）
   let tAmount = 0;
   let now = new Date();
+  let tDays = Number(document.getElementById("tDays").value) || 7;
 
   rows.forEach(r => {
-    if (!r.date || !r.action) return;
+    let act = Number(r.action) || 0;
 
-    let d = new Date(r.date);
-    let diff = (now - d) / (1000 * 60 * 60 * 24);
+    if (act > 0 && r.date) {
 
-    if (diff >= tDays && r.action > 0) {
-      tAmount += Number(r.action);
+      let buyDate = new Date(r.date);
+      let diffDays = (now - buyDate) / (1000 * 60 * 60 * 24);
+
+      if (diffDays >= tDays) {
+        tAmount += act; // ✅ 只统计本金
+      }
     }
   });
+
+  let last = rows[rows.length - 1] || {};
 
   document.getElementById("sumHolding").innerText = last.final || 0;
   document.getElementById("sumProfit").innerText = totalProfit.toFixed(2);
