@@ -3,37 +3,36 @@
 <head>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta charset="utf-8">
-
 <title>每日记录</title>
 
 <style>
-body {
+body{
   margin:0;
   font-family:-apple-system;
   background:#f5f6f8;
-  font-size:12px;
+  font-size:11px;
 }
 
-.container { padding:6px; }
+.container{ padding:6px; }
 
 /* 顶部 */
-.summary {
+.summary{
   display:flex;
   background:#fff;
   border-radius:8px;
-  padding:8px;
+  padding:6px;
   margin-bottom:6px;
 }
-.summary div { flex:1; text-align:center; }
-.summary span { display:block; font-weight:bold; }
+.summary div{ flex:1; text-align:center; }
+.summary span{ display:block; font-weight:bold; }
 
 /* 按钮 */
-.btn-row {
+.btn-row{
   display:flex;
   gap:6px;
   margin-bottom:6px;
 }
-.btn-row button {
+.btn-row button{
   flex:1;
   background:#4CAF50;
   color:#fff;
@@ -42,50 +41,66 @@ body {
   border-radius:6px;
 }
 
-/* 🔥 关键：外层横向滚动 */
-.table-wrap{
-  overflow-x:auto;
-}
-
-/* 表格 */
-table {
-  min-width:650px;   /* 🔥 核心：不再压缩 */
+/* 表格核心 */
+table{
+  width:100%;
   border-collapse:collapse;
   background:#fff;
+  table-layout:fixed;
 }
 
-th, td {
-  padding:4px;
+/* 列宽分配（关键） */
+th:nth-child(1), td:nth-child(1){ width:22%; }
+th:nth-child(2), td:nth-child(2){ width:12%; }
+th:nth-child(3), td:nth-child(3){ width:12%; }
+th:nth-child(4), td:nth-child(4){ width:14%; }
+th:nth-child(5), td:nth-child(5){ width:14%; }
+th:nth-child(6), td:nth-child(6){ width:14%; }
+th:nth-child(7), td:nth-child(7){ width:8%; }
+th:nth-child(8), td:nth-child(8){ width:4%; }
+
+/* 单元格 */
+th,td{
+  padding:1px;
   text-align:center;
   white-space:nowrap;
+  overflow:hidden;
+  font-size:10px;
 }
 
-th { background:#eee; font-size:11px; }
+th{ background:#eee; }
 
-/* 输入 */
-input {
+/* 输入压缩 */
+input{
   width:100%;
+  min-width:0;
   box-sizing:border-box;
-  font-size:11px;
+  font-size:10px;
+  padding:1px;
   text-align:center;
+}
+
+input[type="date"]{
+  font-size:9px;
+  padding:0;
 }
 
 /* 删除按钮 */
-.delBtn {
+.delBtn{
   background:#ff4d4f;
   color:#fff;
   border:none;
-  padding:3px;
+  padding:2px;
   border-radius:4px;
 }
 
 /* 明细 */
-.unlockBox {
+.unlockBox{
   background:#fff;
   margin-top:6px;
   padding:6px;
   border-radius:6px;
-  font-size:11px;
+  font-size:10px;
 }
 </style>
 </head>
@@ -108,11 +123,7 @@ input {
   <button onclick="calculate()">刷新计算</button>
 </div>
 
-<!-- 🔥 包一层 -->
-<div class="table-wrap">
-
 <table>
-
 <thead>
 <tr>
 <th>日期</th>
@@ -125,11 +136,8 @@ input {
 <th>删</th>
 </tr>
 </thead>
-
 <tbody id="tbody"></tbody>
 </table>
-
-</div>
 
 <div class="unlockBox" id="unlockBox">
 资金解锁明细：
@@ -143,7 +151,6 @@ let rows = JSON.parse(localStorage.getItem("rows") || "[]");
 
 function addRow(){
   let prev = rows.length ? Number(rows[rows.length-1].final) : 0;
-
   rows.push({
     date:new Date().toISOString().slice(0,10),
     estimate:"",
@@ -153,7 +160,6 @@ function addRow(){
     action:0,
     final:prev
   });
-
   save();
 }
 
@@ -173,7 +179,7 @@ function calculate(){
 
   for(let i=0;i<rows.length;i++){
 
-    if(i === 0){
+    if(i===0){
       rows[i].holding = 0;
     }else{
       rows[i].holding = Number(rows[i-1].final);
@@ -183,7 +189,7 @@ function calculate(){
     let a = parseFloat(rows[i].actual)||0;
     let act = Number(rows[i].action)||0;
 
-    let profit = h * (a / 100);
+    let profit = h * (a/100);
 
     rows[i].profit = profit.toFixed(2);
     rows[i].final = (h + profit + act).toFixed(0);
@@ -210,7 +216,6 @@ function calculate(){
 
       for(let i=0;i<queue.length;i++){
         let q = queue[i];
-
         let diff = (d - q.date)/(1000*60*60*24);
         if(diff < tDays) continue;
 
@@ -229,19 +234,17 @@ function calculate(){
   let html = "";
 
   queue.forEach(q=>{
-
-    if(q.amount <= 0) return;
+    if(q.amount<=0) return;
 
     let diff = (now - q.date)/(1000*60*60*24);
 
-    if(diff >= tDays){
+    if(diff>=tDays){
       tAmount += q.amount;
       html += `<div>${q.amount}（可用）</div>`;
     }else{
-      let left = Math.ceil(tDays - diff);
+      let left = Math.ceil(tDays-diff);
       html += `<div>${q.amount}（剩${left}天）</div>`;
     }
-
   });
 
   let last = rows[rows.length-1]||{};
