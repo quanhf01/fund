@@ -42,7 +42,7 @@ body {
   border-radius:6px;
 }
 
-/* 表格锁死 */
+/* 表格 */
 table {
   width:100%;
   border-collapse:collapse;
@@ -59,7 +59,7 @@ th, td {
 
 th { background:#eee; font-size:11px; }
 
-/* 🔥 关键防撑开 */
+/* 🔥 输入防撑 */
 input {
   width:100%;
   min-width:0;
@@ -68,16 +68,7 @@ input {
   padding:2px;
 }
 
-/* 列宽锁死 */
-td:nth-child(1), th:nth-child(1){width:85px;}
-td:nth-child(2), th:nth-child(2){width:45px;}
-td:nth-child(3), th:nth-child(3){width:45px;}
-td:nth-child(4), th:nth-child(4){width:55px;}
-td:nth-child(5), th:nth-child(5){width:55px;}
-td:nth-child(6), th:nth-child(6){width:55px;}
-td:nth-child(7), th:nth-child(7){width:55px;}
-td:nth-child(8), th:nth-child(8){width:35px;}
-
+/* 删除按钮 */
 .delBtn {
   background:#ff4d4f;
   color:#fff;
@@ -86,7 +77,7 @@ td:nth-child(8), th:nth-child(8){width:35px;}
   border-radius:4px;
 }
 
-/* 解锁明细 */
+/* 明细 */
 .unlockBox {
   background:#fff;
   margin-top:6px;
@@ -116,6 +107,19 @@ td:nth-child(8), th:nth-child(8){width:35px;}
 </div>
 
 <table>
+
+<!-- 🔥 终极锁宽（关键） -->
+<colgroup>
+  <col style="width:90px">
+  <col style="width:45px">
+  <col style="width:45px">
+  <col style="width:60px">
+  <col style="width:60px">
+  <col style="width:60px">
+  <col style="width:60px">
+  <col style="width:35px">
+</colgroup>
+
 <thead>
 <tr>
 <th>日期</th>
@@ -128,10 +132,10 @@ td:nth-child(8), th:nth-child(8){width:35px;}
 <th>删</th>
 </tr>
 </thead>
+
 <tbody id="tbody"></tbody>
 </table>
 
-<!-- ✅ 解锁明细 -->
 <div class="unlockBox" id="unlockBox">
 资金解锁明细：
 </div>
@@ -144,7 +148,7 @@ let rows = JSON.parse(localStorage.getItem("rows") || "[]");
 
 /* 新增 */
 function addRow(){
-  let prev = rows.length ? Number(rows[rows.length-1].final) : 10000;
+  let prev = rows.length ? Number(rows[rows.length-1].final) : 0;
 
   rows.push({
     date:new Date().toISOString().slice(0,10),
@@ -176,10 +180,11 @@ function calculate(){
 
   let totalProfit = 0;
 
-  // ===== 收益 =====
   for(let i=0;i<rows.length;i++){
 
-    if(i>0){
+    if(i === 0){
+      rows[i].holding = 0;
+    }else{
       rows[i].holding = Number(rows[i-1].final);
     }
 
@@ -200,7 +205,6 @@ function calculate(){
   let queue = [];
   let now = rows.length ? new Date(rows[rows.length-1].date) : new Date();
 
-  // ===== FIFO资金 =====
   rows.forEach(r=>{
 
     let act = Number(r.action)||0;
@@ -215,11 +219,12 @@ function calculate(){
 
       for(let i=0;i<queue.length;i++){
         let q = queue[i];
-        let diff = (d - q.date)/(1000*60*60*24);
 
+        let diff = (d - q.date)/(1000*60*60*24);
         if(diff < tDays) continue;
 
         let use = Math.min(q.amount,need);
+
         q.amount -= use;
         need -= use;
 
@@ -229,11 +234,12 @@ function calculate(){
 
   });
 
-  // ===== 汇总 + 明细 =====
   let tAmount = 0;
   let html = "";
 
   queue.forEach(q=>{
+
+    if(q.amount <= 0) return; // ✅ 过滤0
 
     let diff = (now - q.date)/(1000*60*60*24);
 
