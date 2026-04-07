@@ -1,67 +1,53 @@
 <!DOCTYPE html>
 <html>
 <head>
-<meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="utf-8">
 
 <title>每日记录</title>
 
 <style>
 body {
+  margin: 0;
   font-family: -apple-system;
   background: #f5f6f8;
-  margin: 0;
-  font-size: 12px;
 }
 
-h3 {
-  font-size: 15px;
+.container {
+  max-width: 100%;
   padding: 6px;
-  margin: 0;
 }
 
-/* 🔥 汇总栏 */
 .summary {
-  background: white;
-  margin: 6px;
-  padding: 8px;
-  border-radius: 10px;
   display: flex;
-  justify-content: space-between;
-  font-size: 12px;
+  background: white;
+  border-radius: 10px;
+  padding: 10px;
+  margin-bottom: 8px;
 }
 
 .summary div {
-  text-align: center;
   flex: 1;
+  text-align: center;
+  font-size: 12px;
 }
 
 .summary span {
   display: block;
   font-weight: bold;
-  margin-top: 3px;
+  margin-top: 5px;
 }
 
-.days-input {
-  width: 40px;
-  font-size: 11px;
-  text-align: center;
-}
-
-/* 按钮 */
-.btn {
-  width: 96%;
-  margin: 6px auto;
-  display: block;
+button {
+  width: 100%;
   background: #4CAF50;
   color: white;
-  padding: 8px;
-  border-radius: 8px;
   border: none;
-  font-size: 13px;
+  padding: 10px;
+  border-radius: 8px;
+  margin-bottom: 8px;
 }
 
-/* 表格 */
 table {
   width: 100%;
   border-collapse: collapse;
@@ -71,56 +57,38 @@ table {
 
 th {
   background: #eee;
-  font-size: 10px;
-  padding: 3px 1px;
+  font-size: 11px;
+  padding: 4px;
 }
 
 td {
-  padding: 1px;
+  padding: 2px;
   text-align: center;
 }
 
 input {
   width: 100%;
-  padding: 4px 1px;
   font-size: 11px;
-  border-radius: 5px;
-  border: 1px solid #ddd;
+  padding: 4px;
   box-sizing: border-box;
 }
-
-.date-input {
-  font-size: 10px;
-  padding: 2px;
-}
-
-/* 紧凑列宽 */
-th:nth-child(1), td:nth-child(1) { width: 78px; }
-th:nth-child(2), td:nth-child(2) { width: 26px; }
-th:nth-child(3), td:nth-child(3) { width: 26px; }
-th:nth-child(4), td:nth-child(4) { width: 58px; }
-th:nth-child(5), td:nth-child(5) { width: 58px; }
-th:nth-child(6), td:nth-child(6) { width: 55px; }
-th:nth-child(7), td:nth-child(7) { width: 60px; }
-
 </style>
 </head>
 
 <body>
 
-<h3>📅 每日记录</h3>
+<div class="container">
 
-<!-- 🔥 汇总 -->
 <div class="summary">
   <div>持仓<span id="sumHolding">0</span></div>
   <div>累计收益<span id="sumProfit">0</span></div>
   <div>
-    T+<input id="days" class="days-input" value="30" onchange="calculate()">金额
+    T+<input id="tDays" value="30" style="width:40px" onchange="calculate()">金额
     <span id="sumT">0</span>
   </div>
 </div>
 
-<button class="btn" onclick="addRow()">➕ 新增一天</button>
+<button onclick="addRow()">➕ 新增一天</button>
 
 <table>
 <thead>
@@ -135,118 +103,114 @@ th:nth-child(7), td:nth-child(7) { width: 60px; }
 </tr>
 </thead>
 
-<tbody id="tableBody"></tbody>
+<tbody id="tbody"></tbody>
 </table>
+
+</div>
 
 <script>
 
-let rows = JSON.parse(localStorage.getItem("rows")||"[]");
+let rows = JSON.parse(localStorage.getItem("rows") || "[]");
 
-function addRow(){
-  let prev = rows.length>0 ? rows[rows.length-1].final : 10000;
+function addRow() {
+  let prev = rows.length ? Number(rows[rows.length - 1].final) : 10000;
 
   rows.push({
     date: new Date().toISOString().slice(0,10),
-    estimate:"",
-    actual:"",
+    estimate: "",
+    actual: "",
     holding: prev,
-    profit:0,
-    action:0,
+    profit: 0,
+    action: 0,
     final: prev
   });
 
   save();
 }
 
-function update(i,key,val){
-  rows[i][key]=val;
+function updateRow(i, key, val) {
+  rows[i][key] = val;
   calculate();
 }
 
-function calculate(){
+function calculate() {
 
   let totalProfit = 0;
 
-  for(let i=0;i<rows.length;i++){
+  for (let i = 0; i < rows.length; i++) {
 
-    if(i>0){
-      rows[i].holding = Number(rows[i-1].final)||0;
+    if (i > 0) {
+      rows[i].holding = Number(rows[i - 1].final);
     }
 
-    let h = Number(rows[i].holding)||0;
-
+    let h = Number(rows[i].holding) || 0;
     let a = parseFloat(rows[i].actual) || 0;
-    a = a / 100;
+    let act = Number(rows[i].action) || 0;
 
-    let act = Number(rows[i].action)||0;
+    let profit = h * (a / 100);
 
-    rows[i].profit = (h * a).toFixed(2);
-    rows[i].final = (h + Number(rows[i].profit) + act).toFixed(0);
+    rows[i].profit = profit.toFixed(2);
+    rows[i].final = (h + profit + act).toFixed(0);
 
-    totalProfit += Number(rows[i].profit);
+    totalProfit += profit;
   }
 
-  /* 🔥 汇总计算 */
+  // 汇总
+  let last = rows[rows.length - 1] || {};
+  let tDays = Number(document.getElementById("tDays").value) || 30;
 
-  // 当前持仓
-  let lastHolding = rows.length>0 ? rows[rows.length-1].final : 0;
-
-  // T+N
-  let days = Number(document.getElementById("days").value) || 30;
-  let now = new Date();
   let tAmount = 0;
+  let now = new Date();
 
-  rows.forEach(r=>{
+  rows.forEach(r => {
+    if (!r.date || !r.action) return;
+
     let d = new Date(r.date);
-    let diff = (now - d) / (1000*60*60*24);
+    let diff = (now - d) / (1000 * 60 * 60 * 24);
 
-    if(diff <= days){
-      tAmount += Number(r.final);
+    if (diff >= tDays && r.action > 0) {
+      tAmount += Number(r.action);
     }
   });
 
-  // 更新UI
-  document.getElementById("sumHolding").innerText = Number(lastHolding).toFixed(0);
+  document.getElementById("sumHolding").innerText = last.final || 0;
   document.getElementById("sumProfit").innerText = totalProfit.toFixed(2);
-  document.getElementById("sumT").innerText = tAmount.toFixed(0);
+  document.getElementById("sumT").innerText = tAmount;
 
   save();
 }
 
-function save(){
+function save() {
   localStorage.setItem("rows", JSON.stringify(rows));
   render();
 }
 
-function render(){
-
-  let tb = document.getElementById("tableBody");
+function render() {
+  let tb = document.getElementById("tbody");
   tb.innerHTML = "";
 
-  rows.forEach((r,i)=>{
+  rows.forEach((r, i) => {
 
     let tr = document.createElement("tr");
 
     tr.innerHTML = `
-<td><input type="date" class="date-input" value="${r.date}" onchange="update(${i},'date',this.value)"></td>
+<td><input type="date" value="${r.date}" onchange="updateRow(${i},'date',this.value)"></td>
 
-<td><input value="${r.estimate}" onchange="update(${i},'estimate',this.value)"></td>
+<td><input value="${r.estimate}" onchange="updateRow(${i},'estimate',this.value)"></td>
 
-<td><input value="${r.actual}" onchange="update(${i},'actual',this.value)"></td>
+<td><input value="${r.actual}" onchange="updateRow(${i},'actual',this.value)"></td>
 
 <td>${Number(r.holding).toFixed(0)}</td>
 
 <td>${Number(r.profit).toFixed(2)}</td>
 
-<td><input value="${r.action}" onchange="update(${i},'action',this.value)"></td>
+<td><input value="${r.action}" onchange="updateRow(${i},'action',this.value)"></td>
 
 <td>${Number(r.final).toFixed(0)}</td>
 `;
 
     tb.appendChild(tr);
   });
-
-  calculate();
 }
 
 render();
