@@ -41,7 +41,7 @@ body{
   border-radius:6px;
 }
 
-/* 表格核心（关键） */
+/* 表格 */
 table{
   width:100%;
   border-collapse:collapse;
@@ -49,9 +49,17 @@ table{
   table-layout:fixed;
 }
 
-/* 所有列平均分 */
-th, td{
-  width:12.5%;
+/* ✅ 列宽（关键修复） */
+th:nth-child(1), td:nth-child(1){ width:22%; }
+th:nth-child(2), td:nth-child(2){ width:11%; }
+th:nth-child(3), td:nth-child(3){ width:11%; }
+th:nth-child(4), td:nth-child(4){ width:13%; }
+th:nth-child(5), td:nth-child(5){ width:13%; }
+th:nth-child(6), td:nth-child(6){ width:13%; }
+th:nth-child(7), td:nth-child(7){ width:10%; }
+th:nth-child(8), td:nth-child(8){ width:7%; }
+
+th,td{
   text-align:center;
   padding:2px;
   font-size:12px;
@@ -68,12 +76,6 @@ input{
   font-size:12px;
   text-align:center;
   box-sizing:border-box;
-}
-
-/* 日期压缩一点 */
-input[type="date"]{
-  font-size:11px;
-  padding:0;
 }
 
 /* 删除按钮 */
@@ -263,7 +265,7 @@ function render(){
     let tr=document.createElement("tr");
 
     tr.innerHTML=`
-<td><input type="date" value="${r.date}" onchange="updateRow(${i},'date',this.value)"></td>
+<td><input value="${r.date}" onchange="updateRow(${i},'date',this.value)"></td>
 <td><input value="${r.estimate}" onchange="updateRow(${i},'estimate',this.value)"></td>
 <td><input value="${r.actual}" onchange="updateRow(${i},'actual',this.value)"></td>
 <td>${Number(r.holding).toFixed(0)}</td>
