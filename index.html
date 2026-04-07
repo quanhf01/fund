@@ -15,12 +15,13 @@ body {
 h2 {
   text-align: center;
   margin: 10px 0;
+  font-size: 20px;
 }
 
 button {
   border: none;
   border-radius: 6px;
-  padding: 5px 8px;
+  padding: 6px 10px;
 }
 
 .add-btn {
@@ -28,18 +29,19 @@ button {
   background: #4CAF50;
   color: white;
   margin-bottom: 8px;
+  font-size: 16px;
 }
 
-/* 🔥 表头 */
+/* 表头 */
 .header {
   display: grid;
-  grid-template-columns: 8ch 6ch 6ch 6ch 4ch;
-  font-size: 12px;
-  color: #888;
-  padding: 5px 6px;
+  grid-template-columns: 8ch 6ch 6ch 7ch 4ch;
+  font-size: 14px;
+  color: #666;
+  padding: 6px 6px;
 }
 
-/* 🔥 每行 */
+/* 每行 */
 .card {
   background: white;
   border-radius: 8px;
@@ -49,24 +51,26 @@ button {
 
 .row {
   display: grid;
-  grid-template-columns: 8ch 6ch 6ch 6ch 4ch;
+  grid-template-columns: 8ch 6ch 6ch 7ch 4ch;
   align-items: center;
   gap: 4px;
 }
 
-/* 🔥 防止撑开 */
+/* 防撑开 */
 .row div, .header div {
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
 }
 
+/* 字体放大 */
 .name {
-  font-size: 12px;
+  font-size: 15px;
+  font-weight: 500;
 }
 
 .code input {
-  font-size: 11px;
+  font-size: 13px;
   color: #888;
   border: 1px solid #eee;
   border-radius: 4px;
@@ -74,15 +78,16 @@ button {
 }
 
 .weight {
-  width: 45px;
+  width: 50px;
   text-align: center;
   border-radius: 4px;
   border: 1px solid #ddd;
+  font-size: 14px;
 }
 
 .change {
   font-weight: bold;
-  font-size: 12px;
+  font-size: 15px;
 }
 
 .red { color: #e53935; }
@@ -94,12 +99,12 @@ button {
   font-size: 12px;
 }
 
-/* 🔥 总涨跌 */
+/* 总收益 */
 #total {
   text-align: center;
-  font-size: 26px;
+  font-size: 28px;
   font-weight: bold;
-  margin-top: 12px;
+  margin-top: 14px;
 }
 </style>
 </head>
@@ -166,9 +171,9 @@ async function calculate() {
     changeEl.innerText = change.toFixed(2) + "%";
     changeEl.className = "change " + (change >= 0 ? "red" : "green");
 
-    // 影响
+    // 影响（🔥4位小数）
     let impactEl = card.querySelector(".impact");
-    impactEl.innerText = impact.toFixed(2) + "%";
+    impactEl.innerText = impact.toFixed(4) + "%";
     impactEl.className = "change " + (impact >= 0 ? "red" : "green");
 
     total += impact;
