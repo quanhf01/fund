@@ -49,11 +49,22 @@ button {
   font-size: 12px;
 }
 
+/* 表格 */
 table {
   width: 100%;
   border-collapse: collapse;
   background: white;
 }
+
+/* 列宽（核心优化） */
+th:nth-child(1), td:nth-child(1) { width: 80px; }   /* 日期 */
+th:nth-child(2), td:nth-child(2) { width: 45px; }   /* 预估 */
+th:nth-child(3), td:nth-child(3) { width: 45px; }   /* 实际 */
+th:nth-child(4), td:nth-child(4) { width: 60px; }   /* 持仓 */
+th:nth-child(5), td:nth-child(5) { width: 60px; }   /* 收益 */
+th:nth-child(6), td:nth-child(6) { width: 55px; }   /* 操作 */
+th:nth-child(7), td:nth-child(7) { width: 70px; }   /* 最终 */
+th:nth-child(8), td:nth-child(8) { width: 40px; }   /* 删除 */
 
 th {
   background: #eee;
@@ -66,21 +77,17 @@ td {
   text-align: center;
 }
 
+/* 输入框紧凑 */
 input {
   width: 100%;
-  font-size: 11px;
-  padding: 3px;
+  font-size: 10px;
+  padding: 2px;
   box-sizing: border-box;
 }
 
-/* ✅ 日期专用宽度 */
-.dateCol {
-  width: 110px;
-}
-
+/* 日期更小 */
 .dateInput {
-  min-width: 105px;
-  font-size: 10px;
+  font-size: 9px;
 }
 
 /* 删除按钮 */
@@ -113,7 +120,7 @@ input {
 <table>
 <thead>
 <tr>
-<th class="dateCol">日期</th>
+<th>日期</th>
 <th>预估%</th>
 <th>实际%</th>
 <th>持仓</th>
@@ -132,6 +139,11 @@ input {
 <script>
 
 let rows = JSON.parse(localStorage.getItem("rows") || "[]");
+
+function formatDate(d) {
+  if (!d) return "";
+  return d.slice(5); // ✅ 只显示 MM-DD
+}
 
 function addRow() {
   let prev = rows.length ? Number(rows[rows.length - 1].final) : 10000;
@@ -219,9 +231,7 @@ function render() {
     let tr = document.createElement("tr");
 
     tr.innerHTML = `
-<td class="dateCol">
-<input class="dateInput" type="date" value="${r.date}" onchange="updateRow(${i},'date',this.value)">
-</td>
+<td><input class="dateInput" type="date" value="${r.date}" onchange="updateRow(${i},'date',this.value)"></td>
 
 <td><input value="${r.estimate}" onchange="updateRow(${i},'estimate',this.value)"></td>
 
