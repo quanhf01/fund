@@ -13,12 +13,11 @@ body {
   margin: 0;
 }
 
-/* 顶部切换 */
+/* 顶部 */
 .tabs {
   display: flex;
   background: white;
 }
-
 .tab {
   flex: 1;
   text-align: center;
@@ -26,22 +25,14 @@ body {
   font-weight: bold;
   border-bottom: 2px solid transparent;
 }
-
 .active {
   color: #4CAF50;
   border-bottom: 2px solid #4CAF50;
 }
 
-.page {
-  display: none;
-  padding: 10px;
-}
+.page { display: none; padding: 10px; }
+.show { display: block; }
 
-.show {
-  display: block;
-}
-
-/* 通用 */
 .btn {
   width: 100%;
   background: #4CAF50;
@@ -55,8 +46,8 @@ body {
 .card {
   background: white;
   border-radius: 10px;
-  padding: 10px;
-  margin-bottom: 8px;
+  padding: 8px;
+  margin-bottom: 6px;
 }
 
 .row {
@@ -73,7 +64,7 @@ input, select {
 
 .total {
   text-align: center;
-  font-size: 20px;
+  font-size: 22px;
   font-weight: bold;
 }
 </style>
@@ -81,73 +72,126 @@ input, select {
 
 <body>
 
-<!-- 🔘 切换按钮 -->
 <div class="tabs">
   <div class="tab active" onclick="switchTab(0)">📊 估值</div>
   <div class="tab" onclick="switchTab(1)">📝 记录</div>
 </div>
 
-<!-- 📊 页面1：估值 -->
+<!-- ===== 估值页面 ===== -->
 <div class="page show" id="page1">
 
 <h3>基金实时估算</h3>
-<button class="btn" onclick="calc()">刷新估值</button>
 
-<div id="estimateResult" class="total">--</div>
+<button class="btn" onclick="calculate()">刷新估值</button>
+<button class="btn" onclick="saveToday()">📥 写入今日记录</button>
+
+<div id="list"></div>
+
+<div id="total" class="total">0%</div>
 
 </div>
 
-<!-- 📝 页面2：记录 -->
+<!-- ===== 记录页面 ===== -->
 <div class="page" id="page2">
 
 <h3>交易记录</h3>
 <button class="btn" onclick="addRecord()">➕ 添加记录</button>
 
-<div id="list"></div>
-
+<div id="recordList"></div>
 <div id="summary" class="total"></div>
 
 </div>
 
 <script>
 
-/* 切换 */
-function switchTab(i) {
+/* ===== 切换 ===== */
+function switchTab(i){
   document.querySelectorAll(".tab").forEach(t=>t.classList.remove("active"));
   document.querySelectorAll(".page").forEach(p=>p.classList.remove("show"));
-
   document.querySelectorAll(".tab")[i].classList.add("active");
   document.querySelectorAll(".page")[i].classList.add("show");
 }
 
-/* ===== 估值（简单版占位） ===== */
-function calc() {
-  let val = (Math.random()*2-1).toFixed(3);
-  document.getElementById("estimateResult").innerText = val + "%";
+/* ===== 股票数据 ===== */
+let stocks = [
+  ["sh600900",4.78],
+  ["sh601668",4.4],
+  ["sh601939",2.76]
+];
+
+/* ===== 获取数据 ===== */
+async function getStock(code){
+  let res = await fetch(`https://qt.gtimg.cn/q=${code}`);
+  let buf = await res.arrayBuffer();
+  let txt = new TextDecoder("gbk").decode(buf);
+  let d = txt.split("~");
+
+  let p = parseFloat(d[3]);
+  let y = parseFloat(d[4]);
+
+  return {
+    name:d[1],
+    change:(p-y)/y*100
+  };
+}
+
+/* ===== 渲染 ===== */
+async function calculate(){
+  let list = document.getElementById("list");
+  list.innerHTML="";
+
+  let total=0;
+
+  for(let s of stocks){
+    let d = await getStock(s[0]);
+    let impact = d.change * s[1] / 100;
+    total += impact;
+
+    let div = document.createElement("div");
+    div.className="card";
+    div.innerHTML=`
+      ${d.name} (${s[0]})<br>
+      涨跌：${d.change.toFixed(2)}% ｜ 影响：${impact.toFixed(4)}%
+    `;
+    list.appendChild(div);
+  }
+
+  document.getElementById("total").innerText = total.toFixed(4)+"%";
+}
+
+/* ===== 写入记录（核心🔥） ===== */
+function saveToday(){
+  let total = document.getElementById("total").innerText.replace("%","");
+  let d = new Date().toISOString().slice(0,10);
+
+  records.push({
+    date:d,
+    estimate:total,
+    actual:"",
+    action:"加仓",
+    amount:""
+  });
+
+  save();
+  alert("已写入今日预估！");
 }
 
 /* ===== 记录系统 ===== */
 let records = JSON.parse(localStorage.getItem("records")||"[]");
 
 function save(){
-  localStorage.setItem("records", JSON.stringify(records));
+  localStorage.setItem("records",JSON.stringify(records));
+  render();
 }
 
 function addRecord(){
   let d = new Date().toISOString().slice(0,10);
   records.push({date:d,estimate:"",actual:"",action:"加仓",amount:""});
   save();
-  render();
-}
-
-function update(i,k,v){
-  records[i][k]=v;
-  save();
-  render();
 }
 
 function render(){
-  let list = document.getElementById("list");
+  let list=document.getElementById("recordList");
   list.innerHTML="";
 
   let total=0;
@@ -171,19 +215,17 @@ function render(){
     div.innerHTML=`
     <div class="row">
       <input type="date" value="${r.date}" onchange="update(${i},'date',this.value)">
-      <input placeholder="预估%" value="${r.estimate}" onchange="update(${i},'estimate',this.value)">
-      <input placeholder="实际%" value="${r.actual}" onchange="update(${i},'actual',this.value)">
+      <input value="${r.estimate}" onchange="update(${i},'estimate',this.value)">
+      <input value="${r.actual}" onchange="update(${i},'actual',this.value)">
     </div>
     <div class="row">
       <select onchange="update(${i},'action',this.value)">
         <option ${r.action==='加仓'?'selected':''}>加仓</option>
         <option ${r.action==='减仓'?'selected':''}>减仓</option>
       </select>
-      <input placeholder="金额" value="${r.amount}" onchange="update(${i},'amount',this.value)">
+      <input value="${r.amount}" onchange="update(${i},'amount',this.value)">
     </div>
-    <div style="font-size:12px;color:#999">
-      持有 ${days.toFixed(0)} 天 ${days>=30?'✅':''}
-    </div>
+    持有${days.toFixed(0)}天 ${days>=30?'✅':''}
     `;
 
     list.appendChild(div);
@@ -191,6 +233,11 @@ function render(){
 
   document.getElementById("summary").innerText =
     `总投入:${total} ｜ 满30天:${canSell}`;
+}
+
+function update(i,k,v){
+  records[i][k]=v;
+  save();
 }
 
 render();
