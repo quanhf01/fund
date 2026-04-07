@@ -20,7 +20,6 @@ h2 {
   margin: 8px 0;
 }
 
-/* 按钮 */
 .add-btn {
   width: 100%;
   background: #4CAF50;
@@ -32,7 +31,6 @@ h2 {
   margin-bottom: 8px;
 }
 
-/* 表头 */
 .header {
   display: grid;
   grid-template-columns: 2fr 1fr 1fr 1fr auto;
@@ -41,52 +39,68 @@ h2 {
   padding: 4px 6px;
 }
 
-/* 卡片 */
 .card {
   background: white;
-  border-radius: 8px;
-  padding: 6px;
+  border-radius: 10px;
+  padding: 8px;
   margin-bottom: 6px;
 }
 
-/* 行 */
 .row {
   display: grid;
   grid-template-columns: 2fr 1fr 1fr 1fr auto;
   align-items: center;
-  gap: 4px;
+  gap: 6px;
 }
 
-/* 防撑开 */
 .row div {
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
 }
 
-/* 字体（🔥已整体缩小） */
+/* 🔥 股票列优化 */
+.stock-box {
+  display: flex;
+  flex-direction: column;
+}
+
 .name {
   font-size: 14px;
-  font-weight: 500;
+  font-weight: 600;
 }
 
 .codeInput {
-  width: 100%;
-  font-size: 12px;
+  border: none;
+  border-bottom: 1px solid #ddd;
+  background: transparent;
+  font-size: 11px;
+  color: #999;
+  padding: 2px 0;
+}
+
+/* 🔥 占比美化（胶囊） */
+.weight-box {
+  display: flex;
+  justify-content: center;
 }
 
 .weight {
-  width: 55px;
-  font-size: 13px;
+  width: 60px;
+  border: none;
+  border-radius: 20px;
+  background: #f0f2f5;
   text-align: center;
+  font-size: 13px;
+  padding: 4px 0;
 }
 
+/* 数据 */
 .change {
   font-size: 13px;
   font-weight: 500;
 }
 
-/* 颜色 */
 .red { color: #e53935; }
 .green { color: #2e7d32; }
 
@@ -165,15 +179,12 @@ async function calculate() {
     let change = data.change;
     let impact = change * weight;
 
-    // 名称
     card.querySelector(".name").innerText = data.name;
 
-    // 涨跌
     let changeEl = card.querySelector(".change");
     changeEl.innerText = change.toFixed(2) + "%";
     changeEl.className = "change " + (change >= 0 ? "red" : "green");
 
-    // 影响（4位）
     let impactEl = card.querySelector(".impact");
     impactEl.innerText = impact.toFixed(4) + "%";
     impactEl.className = "change " + (impact >= 0 ? "red" : "green");
@@ -182,8 +193,6 @@ async function calculate() {
   }
 
   let totalEl = document.getElementById("total");
-
-  // 🔥 总结果4位
   totalEl.innerText = total.toFixed(4) + "%";
   totalEl.style.color = total >= 0 ? "#e53935" : "#2e7d32";
 }
@@ -195,13 +204,13 @@ function addRow(code="", weight=10) {
   div.innerHTML = `
     <div class="row">
       
-      <div>
+      <div class="stock-box">
         <div class="name">--</div>
         <input class="codeInput" value="${code}" placeholder="sh600900">
       </div>
 
-      <div>
-        <input class="weight" value="${weight}">%
+      <div class="weight-box">
+        <input class="weight" value="${weight}">
       </div>
 
       <div class="change">-</div>
