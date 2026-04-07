@@ -60,16 +60,16 @@ input {
 
 .date-input {
   font-size: 11px;
-  padding: 4px 2px;
+  padding: 2px;
 }
 
-/* 列宽重新分配🔥 */
-th:nth-child(1), td:nth-child(1) { width: 65px; }
+/* 🔥 列宽优化 */
+th:nth-child(1), td:nth-child(1) { width: 85px; }
 th:nth-child(2), td:nth-child(2) { width: 28px; }
 th:nth-child(3), td:nth-child(3) { width: 28px; }
 th:nth-child(4), td:nth-child(4) { width: 60px; }
-th:nth-child(5), td:nth-child(5) { width: 60px; } /* 收益 */
-th:nth-child(6), td:nth-child(6) { width: 60px; } /* 操作 */
+th:nth-child(5), td:nth-child(5) { width: 60px; }
+th:nth-child(6), td:nth-child(6) { width: 60px; }
 th:nth-child(7), td:nth-child(7) { width: 65px; }
 
 </style>
@@ -111,7 +111,7 @@ function addRow(){
     actual:"",
     holding: prev,
     profit:0,
-    action:"",
+    action:0,
     final: prev
   });
 
@@ -134,13 +134,17 @@ function calculate(){
     }
 
     let h = Number(rows[i].holding)||0;
-    let a = Number(rows[i].actual)||0;
+
+    /* ✅ 支持输入 0.1% / -0.2% */
+    let a = parseFloat(rows[i].actual) || 0;
+    a = a / 100;
+
     let act = Number(rows[i].action)||0;
 
-    /* 收益 = 实际% × 持仓 */
+    /* 收益 */
     rows[i].profit = (h * a).toFixed(0);
 
-    /* 最终 = 持仓 + 收益 + 操作 */
+    /* 最终 */
     rows[i].final = (h + Number(rows[i].profit) + act).toFixed(0);
   }
 
@@ -168,7 +172,7 @@ function render(){
 
 <td><input value="${r.estimate}" maxlength="5" onchange="update(${i},'estimate',this.value)"></td>
 
-<td><input value="${r.actual}" maxlength="5" onchange="update(${i},'actual',this.value)"></td>
+<td><input value="${r.actual}" maxlength="6" onchange="update(${i},'actual',this.value)"></td>
 
 <td>${Number(r.holding).toFixed(0)}</td>
 
