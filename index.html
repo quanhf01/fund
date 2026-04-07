@@ -2,6 +2,10 @@
 <html>
 <head>
 <meta charset="utf-8">
+
+<!-- 🔥 关键修复：手机全宽 -->
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
 <title>基金实时估算</title>
 
 <style>
@@ -32,7 +36,7 @@ h2 {
 /* 表头 */
 .header {
   display: grid;
-  grid-template-columns: 2fr 1fr 1fr 1fr auto;
+  grid-template-columns: 2.2fr 1fr 1fr 1fr auto;
   font-size: 14px;
   color: #666;
   padding: 6px;
@@ -46,15 +50,16 @@ h2 {
   margin-bottom: 8px;
 }
 
-/* 行布局（🔥核心修复：自适应宽度） */
+/* 🔥 核心：真正铺满宽度 */
 .row {
   display: grid;
-  grid-template-columns: 2fr 1fr 1fr 1fr auto;
+  grid-template-columns: 2.2fr 1fr 1fr 1fr auto;
   align-items: center;
   gap: 6px;
+  width: 100%;
 }
 
-/* 防止挤压 */
+/* 防止撑开 */
 .row div {
   overflow: hidden;
   white-space: nowrap;
@@ -67,8 +72,8 @@ h2 {
   font-weight: 600;
 }
 
-.code input {
-  width: 90%;
+.codeInput {
+  width: 100%;
   font-size: 13px;
 }
 
@@ -98,7 +103,7 @@ h2 {
 /* 总收益 */
 #total {
   text-align: center;
-  font-size: 30px;
+  font-size: 32px;
   font-weight: bold;
   margin-top: 14px;
 }
@@ -125,7 +130,6 @@ h2 {
 
 <script>
 
-// 🔥 修复：用价格计算涨幅（最准）
 async function getStockData(code) {
   try {
     let res = await fetch(`https://qt.gtimg.cn/q=${code}`);
@@ -171,7 +175,7 @@ async function calculate() {
     changeEl.innerText = change.toFixed(2) + "%";
     changeEl.className = "change " + (change >= 0 ? "red" : "green");
 
-    // 🔥 影响（4位小数）
+    // 影响（4位）
     let impactEl = card.querySelector(".impact");
     impactEl.innerText = impact.toFixed(4) + "%";
     impactEl.className = "change " + (impact >= 0 ? "red" : "green");
@@ -180,7 +184,9 @@ async function calculate() {
   }
 
   let totalEl = document.getElementById("total");
-  totalEl.innerText = total.toFixed(2) + "%";
+
+  // 🔥 总结果改成4位
+  totalEl.innerText = total.toFixed(4) + "%";
   totalEl.style.color = total >= 0 ? "#e53935" : "#2e7d32";
 }
 
