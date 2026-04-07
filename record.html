@@ -12,10 +12,8 @@ body{
   background:#f5f6f8;
   font-size:12px;
 }
-
 .container{ padding:6px; }
 
-/* 顶部固定 */
 .top-fixed{
   position:sticky;
   top:0;
@@ -24,7 +22,6 @@ body{
   padding-bottom:6px;
 }
 
-/* 顶部 */
 .summary{
   display:flex;
   background:#fff;
@@ -33,21 +30,17 @@ body{
   margin-bottom:6px;
   align-items:center;
 }
-
 .summary div{
   flex:1;
   text-align:center;
   font-size:15px;
 }
-
 .summary span{
   display:block;
   font-weight:bold;
   font-size:22px;
-  margin-top:2px;
 }
 
-/* 按钮 */
 .btn-row{
   display:flex;
   gap:6px;
@@ -59,10 +52,8 @@ body{
   border:none;
   padding:10px;
   border-radius:6px;
-  font-size:14px;
 }
 
-/* 表格 */
 table{
   width:100%;
   border-collapse:collapse;
@@ -70,7 +61,6 @@ table{
   table-layout:fixed;
 }
 
-/* 列宽 */
 th:nth-child(1), td:nth-child(1){ width:22%; }
 th:nth-child(2), td:nth-child(2){ width:11%; }
 th:nth-child(3), td:nth-child(3){ width:11%; }
@@ -87,34 +77,27 @@ th,td{
   white-space:nowrap;
   overflow:hidden;
 }
-
 th{ background:#eee; }
 
-/* 输入框 */
 input, select{
   width:100%;
-  padding:0;
   font-size:12px;
   text-align:center;
   box-sizing:border-box;
 }
 
-/* 删除按钮 */
 .delBtn{
   background:#ff4d4f;
   color:#fff;
   border:none;
-  padding:2px;
   border-radius:4px;
 }
 
-/* 明细 */
 .unlockBox{
   background:#fff;
   margin-top:6px;
   padding:6px;
   border-radius:6px;
-  font-size:12px;
 }
 </style>
 </head>
@@ -129,7 +112,7 @@ input, select{
   <div>持仓<span id="sumHolding">0</span></div>
   <div>收益<span id="sumProfit">0</span></div>
   <div>
-    T+<input id="tDays" value="3" style="width:55px;font-size:16px;text-align:center;">金额
+    T+<input id="tDays" value="3" style="width:55px;text-align:center;">金额
     <span id="sumT">0</span>
   </div>
 </div>
@@ -157,9 +140,7 @@ input, select{
 <tbody id="tbody"></tbody>
 </table>
 
-<div class="unlockBox" id="unlockBox">
-资金解锁明细：
-</div>
+<div class="unlockBox" id="unlockBox">资金解锁明细：</div>
 
 </div>
 
@@ -167,7 +148,7 @@ input, select{
 
 let rows = JSON.parse(localStorage.getItem("rows") || "[]");
 
-/* 生成日期下拉 */
+/* ✅ 动态日期（永远包含今天） */
 function getDateOptions(selected){
   let html="";
   let today=new Date();
@@ -176,7 +157,11 @@ function getDateOptions(selected){
     let d=new Date();
     d.setDate(today.getDate()-i);
 
-    let str=d.toISOString().slice(0,10);
+    let y=d.getFullYear();
+    let m=String(d.getMonth()+1).padStart(2,'0');
+    let day=String(d.getDate()).padStart(2,'0');
+
+    let str=`${y}-${m}-${day}`;
 
     html+=`<option value="${str}" ${str===selected?"selected":""}>${str}</option>`;
   }
@@ -185,10 +170,11 @@ function getDateOptions(selected){
 
 function addRow(){
   let prev = rows.length ? Number(rows[rows.length-1].final) : 0;
-  let today=new Date().toISOString().slice(0,10);
+  let today=new Date();
+  let str=today.getFullYear()+"-"+String(today.getMonth()+1).padStart(2,'0')+"-"+String(today.getDate()).padStart(2,'0');
 
   rows.push({
-    date:today,
+    date:str,
     estimate:"",
     actual:"",
     holding:prev,
@@ -200,10 +186,8 @@ function addRow(){
 }
 
 function deleteRow(i){
-  if(confirm("确定要删除这一行吗？")){
-    rows.splice(i,1);
-    save();
-  }
+  rows.splice(i,1);
+  save();
 }
 
 function updateRow(i,key,val){
@@ -213,84 +197,82 @@ function updateRow(i,key,val){
 
 function calculate(){
 
-  let totalProfit = 0;
+  let totalProfit=0;
 
   for(let i=0;i<rows.length;i++){
 
     if(i===0){
-      rows[i].holding = 0;
+      rows[i].holding=0;
     }else{
-      rows[i].holding = Number(rows[i-1].final);
+      rows[i].holding=Number(rows[i-1].final);
     }
 
-    let h = Number(rows[i].holding)||0;
-    let a = parseFloat(rows[i].actual)||0;
-    let act = Number(rows[i].action)||0;
+    let h=Number(rows[i].holding)||0;
+    let a=parseFloat(rows[i].actual)||0;
+    let act=Number(rows[i].action)||0;
 
-    let profit = h * (a/100);
+    let profit=h*(a/100);
 
-    rows[i].profit = profit.toFixed(2);
-    rows[i].final = (h + profit + act).toFixed(0);
+    rows[i].profit=profit.toFixed(2);
+    rows[i].final=(h+profit+act).toFixed(0);
 
-    totalProfit += profit;
+    totalProfit+=profit;
   }
 
-  let tDays = Number(document.getElementById("tDays").value)||3;
+  let tDays=Number(document.getElementById("tDays").value)||3;
 
-  let queue = [];
-  let now = rows.length ? new Date(rows[rows.length-1].date) : new Date();
+  let queue=[];
+  let now=new Date();
 
   rows.forEach(r=>{
 
-    let act = Number(r.action)||0;
-    let d = new Date(r.date);
+    let act=Number(r.action)||0;
+    let d=new Date(r.date);
 
-    if(act > 0){
+    if(act>0){
       queue.push({amount:act,date:d});
     }
 
-    if(act < 0){
-      let need = Math.abs(act);
+    if(act<0){
+      let need=Math.abs(act);
 
       for(let i=0;i<queue.length;i++){
-        let q = queue[i];
-        let diff = (d - q.date)/(1000*60*60*24);
-        if(diff < tDays) continue;
+        let q=queue[i];
+        let diff=(d-q.date)/(1000*60*60*24);
+        if(diff<tDays) continue;
 
-        let use = Math.min(q.amount,need);
-
-        q.amount -= use;
-        need -= use;
-
+        let use=Math.min(q.amount,need);
+        q.amount-=use;
+        need-=use;
         if(need===0) break;
       }
     }
 
   });
 
-  let tAmount = 0;
-  let html = "";
+  let tAmount=0;
+  let html="";
 
   queue.forEach(q=>{
     if(q.amount<=0) return;
 
-    let diff = (now - q.date)/(1000*60*60*24);
+    let diff=(now-q.date)/(1000*60*60*24);
 
     if(diff>=tDays){
-      tAmount += q.amount;
-      html += `<div>${q.amount}（可用）</div>`;
+      tAmount+=q.amount;
+      html+=`<div>${q.amount}（可用）</div>`;
     }else{
-      let left = Math.ceil(tDays-diff);
-      html += `<div>${q.amount}（剩${left}天）</div>`;
+      let left=Math.ceil(tDays-diff);
+      html+=`<div>${q.amount}（剩${left}天）</div>`;
     }
   });
 
-  let last = rows[rows.length-1]||{};
+  let last=rows[rows.length-1]||{};
 
-  document.getElementById("sumHolding").innerText = last.final||0;
-  document.getElementById("sumProfit").innerText = totalProfit.toFixed(2);
-  document.getElementById("sumT").innerText = tAmount;
-  document.getElementById("unlockBox").innerHTML = "资金解锁明细："+html;
+  document.getElementById("sumHolding").innerText=last.final||0;
+  document.getElementById("sumProfit").innerText=totalProfit.toFixed(2);
+  document.getElementById("sumT").innerText=tAmount;
+  document.getElementById("unlockBox").innerHTML="资金解锁明细："+html;
 
   save();
 }
