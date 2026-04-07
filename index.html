@@ -14,55 +14,66 @@ body {
 
 h2 {
   text-align: center;
-  margin-bottom: 10px;
+  margin: 10px 0;
 }
 
 button {
-  padding: 6px 10px;
-  border-radius: 6px;
   border: none;
-  background: #4CAF50;
-  color: white;
+  border-radius: 6px;
+  padding: 5px 8px;
 }
 
 .add-btn {
   width: 100%;
-  margin-bottom: 10px;
+  background: #4CAF50;
+  color: white;
+  margin-bottom: 8px;
+}
+
+.header {
+  display: grid;
+  grid-template-columns: 1.8fr 0.9fr 0.9fr 0.9fr 0.6fr;
+  font-size: 12px;
+  color: #888;
+  padding: 5px 8px;
 }
 
 .card {
   background: white;
-  border-radius: 10px;
-  padding: 10px;
-  margin-bottom: 10px;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+  border-radius: 8px;
+  padding: 6px;
+  margin-bottom: 6px;
 }
 
 .row {
-  display: flex;
-  justify-content: space-between;
+  display: grid;
+  grid-template-columns: 1.8fr 0.9fr 0.9fr 0.9fr 0.6fr;
   align-items: center;
+  gap: 6px;
 }
 
 .name {
-  font-size: 14px;
-  color: #333;
+  font-size: 13px;
 }
 
-.code {
-  font-size: 12px;
+.code input {
+  font-size: 11px;
   color: #888;
+  border: 1px solid #eee;
+  border-radius: 4px;
+  width: 90px;
 }
 
-input {
-  width: 60px;
+.weight {
+  width: 50px;
   text-align: center;
-  border-radius: 6px;
+  border-radius: 4px;
   border: 1px solid #ddd;
 }
 
 .change {
   font-weight: bold;
+  font-size: 13px;
 }
 
 .red { color: #e53935; }
@@ -70,17 +81,16 @@ input {
 
 .delete-btn {
   background: #ff4d4f;
+  color: white;
   font-size: 12px;
-  padding: 4px 6px;
 }
 
 #total {
   text-align: center;
   font-size: 26px;
   font-weight: bold;
-  margin-top: 15px;
+  margin-top: 12px;
 }
-
 </style>
 </head>
 
@@ -89,6 +99,14 @@ input {
 <h2>基金实时估算</h2>
 
 <button class="add-btn" onclick="addRow()">➕ 添加股票</button>
+
+<div class="header">
+  <div>股票</div>
+  <div>占比</div>
+  <div>涨跌</div>
+  <div>影响</div>
+  <div></div>
+</div>
 
 <div id="list"></div>
 
@@ -133,10 +151,15 @@ async function calculate() {
     // 名称
     card.querySelector(".name").innerText = data.name;
 
-    // 涨跌颜色
+    // 涨跌
     let changeEl = card.querySelector(".change");
     changeEl.innerText = change.toFixed(2) + "%";
     changeEl.className = "change " + (change >= 0 ? "red" : "green");
+
+    // 影响
+    let impactEl = card.querySelector(".impact");
+    impactEl.innerText = impact.toFixed(2) + "%";
+    impactEl.className = "change " + (impact >= 0 ? "red" : "green");
 
     total += impact;
   }
@@ -152,6 +175,7 @@ function addRow(code="", weight=10) {
 
   div.innerHTML = `
     <div class="row">
+      
       <div>
         <div class="name">--</div>
         <div class="code">
@@ -165,7 +189,10 @@ function addRow(code="", weight=10) {
 
       <div class="change">-</div>
 
+      <div class="impact">-</div>
+
       <button class="delete-btn" onclick="this.parentNode.parentNode.remove()">删</button>
+
     </div>
   `;
 
