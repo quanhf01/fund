@@ -4,40 +4,49 @@
 <meta charset="UTF-8">
 <title>基金实时估算</title>
 <style>
-body { font-family: Arial; }
 table { border-collapse: collapse; width: 100%; }
-th, td { border: 1px solid #ccc; padding: 8px; text-align: center; }
+th, td { border: 1px solid #ccc; padding: 6px; text-align: center; }
+input { width: 80px; }
 </style>
 </head>
 
 <body>
 
-<h2>基金实时估算</h2>
+<h2>基金实时估算（自定义）</h2>
 
 <table>
-  <thead>
-    <tr>
-      <th>股票</th>
-      <th>占比</th>
-      <th>涨幅</th>
-      <th>影响</th>
-    </tr>
-  </thead>
-  <tbody id="tableBody"></tbody>
+<thead>
+<tr>
+<th>股票代码</th>
+<th>占比(%)</th>
+<th>涨幅</th>
+<th>影响</th>
+</tr>
+</thead>
+
+<tbody id="body">
+<tr>
+<td><input value="sh600900"></td>
+<td><input value="20"></td>
+<td class="change">-</td>
+<td class="impact">-</td>
+</tr>
+<tr>
+<td><input value="sh600519"></td>
+<td><input value="20"></td>
+<td class="change">-</td>
+<td class="impact">-</td>
+</tr>
+</tbody>
 </table>
 
-<h3 id="total">总涨跌：计算中...</h3>
+<br>
+<button onclick="update()">刷新计算</button>
+
+<h3 id="total">总涨跌：--</h3>
 
 <script>
-const stocks = [
-  { name: "长江电力", code: "sh600900", weight: 0.2 },
-  { name: "中国建筑", code: "sh601668", weight: 0.2 },
-  { name: "贵州茅台", code: "sh600519", weight: 0.2 },
-  { name: "宁德时代", code: "sz300750", weight: 0.2 },
-  { name: "招商银行", code: "sh600036", weight: 0.2 }
-];
-
-async function getData(code) {
+async function getChange(code) {
   const res = await fetch("https://qt.gtimg.cn/q=" + code);
   const text = await res.text();
   const data = text.split("~");
@@ -45,36 +54,32 @@ async function getData(code) {
   const current = parseFloat(data[3]);
   const yesterday = parseFloat(data[4]);
 
-  const change = (current - yesterday) / yesterday;
-  return change;
+  return (current - yesterday) / yesterday;
 }
 
 async function update() {
+  let rows = document.querySelectorAll("#body tr");
   let total = 0;
-  let html = "";
 
-  for (let s of stocks) {
-    const change = await getData(s.code);
-    const impact = change * s.weight;
+  for (let row of rows) {
+    let code = row.cells[0].children[0].value;
+    let weight = parseFloat(row.cells[1].children[0].value) / 100;
+
+    let change = await getChange(code);
+    let impact = change * weight;
+
+    row.querySelector(".change").innerText =
+      (change * 100).toFixed(2) + "%";
+
+    row.querySelector(".impact").innerText =
+      (impact * 100).toFixed(2) + "%";
+
     total += impact;
-
-    html += `
-      <tr>
-        <td>${s.name}</td>
-        <td>${(s.weight * 100).toFixed(1)}%</td>
-        <td>${(change * 100).toFixed(2)}%</td>
-        <td>${(impact * 100).toFixed(2)}%</td>
-      </tr>
-    `;
   }
 
-  document.getElementById("tableBody").innerHTML = html;
   document.getElementById("total").innerText =
     "总涨跌：" + (total * 100).toFixed(2) + "%";
 }
-
-update();
-setInterval(update, 10000);
 </script>
 
 </body>
