@@ -1,20 +1,86 @@
-<!-- ===== 记录页面（新版） ===== -->
-<div class="page" id="page2">
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>每日记录</title>
+
+<style>
+body {
+  font-family: -apple-system;
+  background: #f5f6f8;
+  margin: 0;
+  font-size: 16px;
+}
+
+h3 {
+  font-size: 20px;
+  padding: 10px;
+}
+
+.btn {
+  width: 95%;
+  margin: 10px auto;
+  display: block;
+  background: #4CAF50;
+  color: white;
+  padding: 12px;
+  border-radius: 10px;
+  border: none;
+  font-size: 16px;
+}
+
+.table-wrap {
+  overflow-x: auto;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  background: white;
+}
+
+th {
+  background: #eee;
+  padding: 10px 4px;
+  font-size: 14px;
+}
+
+td {
+  padding: 6px 2px;
+  text-align: center;
+}
+
+input {
+  width: 100%;
+  padding: 10px;
+  font-size: 16px;
+  border-radius: 8px;
+  border: 1px solid #ddd;
+  box-sizing: border-box;
+}
+</style>
+
+</head>
+
+<body>
 
 <h3>📅 每日记录</h3>
+
 <button class="btn" onclick="addRow()">➕ 新增一天</button>
 
-<div style="overflow-x:auto;">
-<table style="width:100%; border-collapse:collapse; font-size:14px;">
+<div class="table-wrap">
+<table>
 <thead>
-<tr style="background:#eee;">
-<th>日期</th>
-<th>预估值%</th>
-<th>实际值%</th>
-<th>持仓值</th>
-<th>加仓</th>
-<th>减仓</th>
-<th>最终值</th>
+<tr>
+<th style="min-width:90px;">日期</th>
+<th style="min-width:70px;">预估%</th>
+<th style="min-width:70px;">实际%</th>
+<th style="min-width:90px;">持仓</th>
+<th style="min-width:80px;">加仓</th>
+<th style="min-width:80px;">减仓</th>
+<th style="min-width:100px;">最终值</th>
 </tr>
 </thead>
 
@@ -22,14 +88,12 @@
 </table>
 </div>
 
-</div>
-
 <script>
 
 /* ===== 数据 ===== */
 let rows = JSON.parse(localStorage.getItem("rows")||"[]");
 
-/* ===== 新增一行 ===== */
+/* ===== 新增 ===== */
 function addRow(){
 
   let prev = rows.length>0 ? rows[rows.length-1].final : 10000;
@@ -39,32 +103,25 @@ function addRow(){
     estimate:"",
     actual:"",
     holding: prev,
-    buy: "",
-    sell: "",
+    buy:"",
+    sell:"",
     final: prev
   });
 
   save();
 }
 
-/* ===== 保存 ===== */
-function save(){
-  localStorage.setItem("rows", JSON.stringify(rows));
-  render();
-}
-
 /* ===== 更新 ===== */
 function update(i,key,val){
-  rows[i][key] = val;
+  rows[i][key]=val;
   calculate();
 }
 
-/* ===== 核心计算逻辑🔥 ===== */
+/* ===== 核心计算🔥 ===== */
 function calculate(){
 
   for(let i=0;i<rows.length;i++){
 
-    // 持仓 = 上一行最终值
     if(i>0){
       rows[i].holding = Number(rows[i-1].final)||0;
     }
@@ -73,11 +130,16 @@ function calculate(){
     let b = Number(rows[i].buy)||0;
     let s = Number(rows[i].sell)||0;
 
-    // 最终值 = 持仓 + 加仓 - 减仓
     rows[i].final = (h + b - s).toFixed(2);
   }
 
   save();
+}
+
+/* ===== 保存 ===== */
+function save(){
+  localStorage.setItem("rows", JSON.stringify(rows));
+  render();
 }
 
 /* ===== 渲染 ===== */
@@ -108,10 +170,12 @@ function render(){
 
     tb.appendChild(tr);
   });
-
 }
 
-/* ===== 初始化 ===== */
+/* 初始化 */
 render();
 
 </script>
+
+</body>
+</html>
