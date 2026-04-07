@@ -1,85 +1,123 @@
 <!DOCTYPE html>
 <html>
 <head>
-<meta charset="UTF-8">
+<meta charset="utf-8">
 <title>基金实时估算</title>
 <style>
-table { border-collapse: collapse; width: 100%; }
-th, td { border: 1px solid #ccc; padding: 6px; text-align: center; }
-input { width: 80px; }
+  table { border-collapse: collapse; width: 100%; }
+  td, th { border: 1px solid #ccc; padding: 8px; text-align: center; }
+  input { width: 80px; }
+  button { margin: 5px; }
 </style>
 </head>
-
 <body>
 
-<h2>基金实时估算（自定义）</h2>
+<h2>基金实时估算（自动版）</h2>
+
+<button onclick="addRow()">➕ 添加股票</button>
 
 <table>
 <thead>
 <tr>
-<th>股票代码</th>
-<th>占比(%)</th>
-<th>涨幅</th>
-<th>影响</th>
+  <th>股票代码</th>
+  <th>占比(%)</th>
+  <th>涨幅</th>
+  <th>影响</th>
+  <th>操作</th>
 </tr>
 </thead>
 
-<tbody id="body">
+<tbody id="tbody">
 <tr>
-<td><input value="sh600900"></td>
-<td><input value="20"></td>
-<td class="change">-</td>
-<td class="impact">-</td>
-</tr>
-<tr>
-<td><input value="sh600519"></td>
-<td><input value="20"></td>
-<td class="change">-</td>
-<td class="impact">-</td>
+  <td><input placeholder="sh600900"></td>
+  <td><input value="20"></td>
+  <td>-</td>
+  <td>-</td>
+  <td><button onclick="deleteRow(this)">删除</button></td>
 </tr>
 </tbody>
 </table>
 
-<br>
-<button onclick="update()">刷新计算</button>
-
-<h3 id="total">总涨跌：--</h3>
+<h3 id="total">总涨跌：0%</h3>
 
 <script>
-async function getChange(code) {
-  const res = await fetch("https://qt.gtimg.cn/q=" + code);
-  const text = await res.text();
-  const data = text.split("~");
+// 获取数据
+async function getStockData(code) {
+  try {
+    let url = `https://qt.gtimg.cn/q=${code}`;
+    let res = await fetch(url);
+    let text = await res.text();
+    let data = text.split("~");
 
-  const current = parseFloat(data[3]);
-  const yesterday = parseFloat(data[4]);
-
-  return (current - yesterday) / yesterday;
+    return {
+      name: data[1],
+      change: parseFloat(data[32])
+    };
+  } catch (e) {
+    return { name: "-", change: 0 };
+  }
 }
 
-async function update() {
-  let rows = document.querySelectorAll("#body tr");
+// 计算
+async function calculate() {
+  let rows = document.querySelectorAll("#tbody tr");
   let total = 0;
 
   for (let row of rows) {
-    let code = row.cells[0].children[0].value;
-    let weight = parseFloat(row.cells[1].children[0].value) / 100;
+    let codeInput = row.cells[0].querySelector("input");
+    let weightInput = row.cells[1].querySelector("input");
 
-    let change = await getChange(code);
+    let code = codeInput.value.trim();
+    let weight = parseFloat(weightInput.value) / 100;
+
+    if (!code) continue;
+
+    let data = await getStockData(code);
+
+    // 显示名称
+    row.cells[0].innerHTML = `
+      <input value="${code}" style="width:80px">
+      <div style="font-size:12px;color:#666">${data.name}</div>
+    `;
+
+    let change = data.change;
     let impact = change * weight;
 
-    row.querySelector(".change").innerText =
-      (change * 100).toFixed(2) + "%";
-
-    row.querySelector(".impact").innerText =
-      (impact * 100).toFixed(2) + "%";
+    row.cells[2].innerText = change.toFixed(2) + "%";
+    row.cells[3].innerText = impact.toFixed(2) + "%";
 
     total += impact;
   }
 
   document.getElementById("total").innerText =
-    "总涨跌：" + (total * 100).toFixed(2) + "%";
+    "总涨跌：" + total.toFixed(2) + "%";
 }
+
+// 添加行
+function addRow() {
+  let tbody = document.getElementById("tbody");
+
+  let tr = document.createElement("tr");
+  tr.innerHTML = `
+    <td><input placeholder="sh600900"></td>
+    <td><input value="10"></td>
+    <td>-</td>
+    <td>-</td>
+    <td><button onclick="deleteRow(this)">删除</button></td>
+  `;
+
+  tbody.appendChild(tr);
+}
+
+// 删除行
+function deleteRow(btn) {
+  let row = btn.parentNode.parentNode;
+  row.remove();
+}
+
+// 自动刷新
+setInterval(calculate, 5000);
+calculate();
 </script>
 
 </body>
