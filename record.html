@@ -11,65 +11,70 @@ body {
   font-family: -apple-system;
   background: #f5f6f8;
   margin: 0;
-  font-size: 14px;
+  font-size: 13px;
 }
 
 h3 {
-  font-size: 18px;
-  padding: 10px;
+  font-size: 17px;
+  padding: 8px;
 }
 
 .btn {
   width: 95%;
-  margin: 10px auto;
+  margin: 8px auto;
   display: block;
   background: #4CAF50;
   color: white;
   padding: 10px;
   border-radius: 10px;
   border: none;
-  font-size: 15px;
+  font-size: 14px;
 }
 
 table {
   width: 100%;
   border-collapse: collapse;
   background: white;
-  table-layout: fixed; /* 关键：压缩布局 */
+  table-layout: fixed;
 }
 
 th {
   background: #eee;
-  font-size: 12px;
-  padding: 6px 2px;
+  font-size: 11px;
+  padding: 4px 1px;
 }
 
 td {
-  padding: 4px 2px;
+  padding: 2px 1px;
   text-align: center;
 }
 
-/* 输入框压缩 */
 input {
   width: 100%;
-  padding: 6px 4px;
-  font-size: 13px;
+  padding: 5px 2px;
+  font-size: 12px;
   border-radius: 6px;
   border: 1px solid #ddd;
   box-sizing: border-box;
 }
 
-/* 固定列宽（核心🔥） */
-th:nth-child(1), td:nth-child(1) { width: 80px; }
-th:nth-child(2), td:nth-child(2) { width: 55px; }
-th:nth-child(3), td:nth-child(3) { width: 55px; }
-th:nth-child(4), td:nth-child(4) { width: 70px; }
-th:nth-child(5), td:nth-child(5) { width: 60px; }
-th:nth-child(6), td:nth-child(6) { width: 60px; }
-th:nth-child(7), td:nth-child(7) { width: 80px; }
+/* 日期压缩 */
+.date-input {
+  font-size: 11px;
+  padding: 4px 2px;
+  line-height: 1.1;
+}
+
+/* 列宽极限压缩 */
+th:nth-child(1), td:nth-child(1) { width: 70px; }
+th:nth-child(2), td:nth-child(2) { width: 50px; }
+th:nth-child(3), td:nth-child(3) { width: 50px; }
+th:nth-child(4), td:nth-child(4) { width: 65px; }
+th:nth-child(5), td:nth-child(5) { width: 55px; }
+th:nth-child(6), td:nth-child(6) { width: 55px; }
+th:nth-child(7), td:nth-child(7) { width: 70px; }
 
 </style>
-
 </head>
 
 <body>
@@ -134,7 +139,7 @@ function calculate(){
     let b = Number(rows[i].buy)||0;
     let s = Number(rows[i].sell)||0;
 
-    rows[i].final = (h + b - s).toFixed(2);
+    rows[i].final = (h + b - s).toFixed(0); /* 去小数🔥 */
   }
 
   save();
@@ -157,19 +162,19 @@ function render(){
     let tr = document.createElement("tr");
 
     tr.innerHTML = `
-<td><input type="date" value="${r.date}" onchange="update(${i},'date',this.value)"></td>
+<td><input type="date" class="date-input" value="${r.date}" onchange="update(${i},'date',this.value)"></td>
 
 <td><input value="${r.estimate}" onchange="update(${i},'estimate',this.value)"></td>
 
 <td><input value="${r.actual}" onchange="update(${i},'actual',this.value)"></td>
 
-<td>${Number(r.holding).toFixed(2)}</td>
+<td>${Number(r.holding).toFixed(0)}</td>
 
 <td><input value="${r.buy}" onchange="update(${i},'buy',this.value)"></td>
 
 <td><input value="${r.sell}" onchange="update(${i},'sell',this.value)"></td>
 
-<td>${Number(r.final).toFixed(2)}</td>
+<td>${Number(r.final).toFixed(0)}</td>
 `;
 
     tb.appendChild(tr);
