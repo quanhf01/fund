@@ -1,44 +1,46 @@
 <!DOCTYPE html>
 <html>
 <head>
-<meta charset="utf-8">
-<title>基金估算</title>
+<meta charset="UTF-8">
+<title>基金实时估算</title>
 </head>
-
 <body>
 
 <h2>基金实时估算</h2>
-
-<div id="result">计算中...</div>
+<p id="result">加载中...</p>
 
 <script>
-let stocks = [
-  {code: "sh600900", weight: 0.2},
-  {code: "sh601398", weight: 0.2},
-  {code: "sh600519", weight: 0.2}
+const stocks = [
+  { code: "sh600900", weight: 0.5 }, // 长江电力
+  { code: "sh600519", weight: 0.5 }  // 贵州茅台（示例）
 ];
 
 async function getPrice(code) {
-  let url = "https://corsproxy.io/?https://qt.gtimg.cn/q=" + code;
-  let res = await fetch(url);
-  let text = await res.text();
-  let data = text.split("~");
-  let price = parseFloat(data[3]);
-  let pre = parseFloat(data[4]);
-  return (price - pre) / pre;
+  const url = "https://qt.gtimg.cn/q=" + code;
+  const res = await fetch(url);
+  const text = await res.text();
+
+  const data = text.split("~");
+  const current = parseFloat(data[3]);
+  const yesterday = parseFloat(data[4]);
+
+  return (current - yesterday) / yesterday;
 }
 
 async function calc() {
   let total = 0;
+
   for (let s of stocks) {
-    let change = await getPrice(s.code);
+    const change = await getPrice(s.code);
     total += change * s.weight;
   }
+
   document.getElementById("result").innerText =
-    "预计涨跌：" + (total * 100).toFixed(2) + "%";
+    "预计涨跌: " + (total * 100).toFixed(2) + "%";
 }
 
 calc();
+setInterval(calc, 10000);
 </script>
 
 </body>
