@@ -11,24 +11,25 @@ body {
   font-family: -apple-system;
   background: #f5f6f8;
   margin: 0;
-  font-size: 13px;
+  font-size: 12px;
 }
 
 h3 {
-  font-size: 17px;
-  padding: 8px;
+  font-size: 15px;
+  padding: 6px;
+  margin: 0;
 }
 
 .btn {
-  width: 95%;
-  margin: 8px auto;
+  width: 96%;
+  margin: 6px auto;
   display: block;
   background: #4CAF50;
   color: white;
-  padding: 10px;
-  border-radius: 10px;
+  padding: 8px;
+  border-radius: 8px;
   border: none;
-  font-size: 14px;
+  font-size: 13px;
 }
 
 table {
@@ -40,37 +41,37 @@ table {
 
 th {
   background: #eee;
-  font-size: 11px;
-  padding: 4px 1px;
+  font-size: 10px;
+  padding: 3px 1px;
 }
 
 td {
-  padding: 2px 1px;
+  padding: 1px;
   text-align: center;
 }
 
 input {
   width: 100%;
-  padding: 5px 2px;
-  font-size: 12px;
-  border-radius: 6px;
+  padding: 4px 1px;
+  font-size: 11px;
+  border-radius: 5px;
   border: 1px solid #ddd;
   box-sizing: border-box;
 }
 
 .date-input {
-  font-size: 11px;
+  font-size: 10px;
   padding: 2px;
 }
 
-/* 🔥 列宽优化 */
-th:nth-child(1), td:nth-child(1) { width: 85px; }
-th:nth-child(2), td:nth-child(2) { width: 28px; }
-th:nth-child(3), td:nth-child(3) { width: 28px; }
-th:nth-child(4), td:nth-child(4) { width: 60px; }
-th:nth-child(5), td:nth-child(5) { width: 60px; }
-th:nth-child(6), td:nth-child(6) { width: 60px; }
-th:nth-child(7), td:nth-child(7) { width: 65px; }
+/* 🔥 极限压缩列宽 */
+th:nth-child(1), td:nth-child(1) { width: 78px; }  /* 日期 */
+th:nth-child(2), td:nth-child(2) { width: 26px; }  /* 预估 */
+th:nth-child(3), td:nth-child(3) { width: 26px; }  /* 实际 */
+th:nth-child(4), td:nth-child(4) { width: 58px; }  /* 持仓 */
+th:nth-child(5), td:nth-child(5) { width: 58px; }  /* 收益 */
+th:nth-child(6), td:nth-child(6) { width: 55px; }  /* 操作 */
+th:nth-child(7), td:nth-child(7) { width: 60px; }  /* 最终 */
 
 </style>
 </head>
@@ -135,14 +136,14 @@ function calculate(){
 
     let h = Number(rows[i].holding)||0;
 
-    /* ✅ 支持输入 0.1% / -0.2% */
+    /* 支持 0.1% */
     let a = parseFloat(rows[i].actual) || 0;
     a = a / 100;
 
     let act = Number(rows[i].action)||0;
 
-    /* 收益 */
-    rows[i].profit = (h * a).toFixed(0);
+    /* ✅ 收益保留2位小数 */
+    rows[i].profit = (h * a).toFixed(2);
 
     /* 最终 */
     rows[i].final = (h + Number(rows[i].profit) + act).toFixed(0);
@@ -176,7 +177,7 @@ function render(){
 
 <td>${Number(r.holding).toFixed(0)}</td>
 
-<td>${Number(r.profit).toFixed(0)}</td>
+<td>${Number(r.profit).toFixed(2)}</td>
 
 <td><input value="${r.action}" onchange="update(${i},'action',this.value)"></td>
 
