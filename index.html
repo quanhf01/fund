@@ -3,44 +3,78 @@
 <head>
 <meta charset="UTF-8">
 <title>基金实时估算</title>
+<style>
+body { font-family: Arial; }
+table { border-collapse: collapse; width: 100%; }
+th, td { border: 1px solid #ccc; padding: 8px; text-align: center; }
+</style>
 </head>
+
 <body>
 
 <h2>基金实时估算</h2>
-<p id="result">加载中...</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>股票</th>
+      <th>占比</th>
+      <th>涨幅</th>
+      <th>影响</th>
+    </tr>
+  </thead>
+  <tbody id="tableBody"></tbody>
+</table>
+
+<h3 id="total">总涨跌：计算中...</h3>
 
 <script>
 const stocks = [
-  { code: "sh600900", weight: 0.5 }, // 长江电力
-  { code: "sh600519", weight: 0.5 }  // 贵州茅台（示例）
+  { name: "长江电力", code: "sh600900", weight: 0.2 },
+  { name: "中国建筑", code: "sh601668", weight: 0.2 },
+  { name: "贵州茅台", code: "sh600519", weight: 0.2 },
+  { name: "宁德时代", code: "sz300750", weight: 0.2 },
+  { name: "招商银行", code: "sh600036", weight: 0.2 }
 ];
 
-async function getPrice(code) {
-  const url = "https://qt.gtimg.cn/q=" + code;
-  const res = await fetch(url);
+async function getData(code) {
+  const res = await fetch("https://qt.gtimg.cn/q=" + code);
   const text = await res.text();
-
   const data = text.split("~");
+
   const current = parseFloat(data[3]);
   const yesterday = parseFloat(data[4]);
 
-  return (current - yesterday) / yesterday;
+  const change = (current - yesterday) / yesterday;
+  return change;
 }
 
-async function calc() {
+async function update() {
   let total = 0;
+  let html = "";
 
   for (let s of stocks) {
-    const change = await getPrice(s.code);
-    total += change * s.weight;
+    const change = await getData(s.code);
+    const impact = change * s.weight;
+    total += impact;
+
+    html += `
+      <tr>
+        <td>${s.name}</td>
+        <td>${(s.weight * 100).toFixed(1)}%</td>
+        <td>${(change * 100).toFixed(2)}%</td>
+        <td>${(impact * 100).toFixed(2)}%</td>
+      </tr>
+    `;
   }
 
-  document.getElementById("result").innerText =
-    "预计涨跌: " + (total * 100).toFixed(2) + "%";
+  document.getElementById("tableBody").innerHTML = html;
+  document.getElementById("total").innerText =
+    "总涨跌：" + (total * 100).toFixed(2) + "%";
 }
 
-calc();
-setInterval(calc, 10000);
+update();
+setInterval(update, 10000);
 </script>
 
 </body>
