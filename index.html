@@ -2,8 +2,6 @@
 <html>
 <head>
 <meta charset="utf-8">
-
-<!-- 🔥 关键修复：手机全宽 -->
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <title>基金实时估算</title>
@@ -18,7 +16,8 @@ body {
 
 h2 {
   text-align: center;
-  font-size: 20px;
+  font-size: 18px;
+  margin: 8px 0;
 }
 
 /* 按钮 */
@@ -26,66 +25,65 @@ h2 {
   width: 100%;
   background: #4CAF50;
   color: white;
-  padding: 10px;
+  padding: 8px;
   border-radius: 6px;
   border: none;
-  font-size: 16px;
-  margin-bottom: 10px;
+  font-size: 14px;
+  margin-bottom: 8px;
 }
 
 /* 表头 */
 .header {
   display: grid;
-  grid-template-columns: 2.2fr 1fr 1fr 1fr auto;
-  font-size: 14px;
+  grid-template-columns: 2fr 1fr 1fr 1fr auto;
+  font-size: 12px;
   color: #666;
-  padding: 6px;
+  padding: 4px 6px;
 }
 
 /* 卡片 */
 .card {
   background: white;
   border-radius: 8px;
-  padding: 8px;
-  margin-bottom: 8px;
+  padding: 6px;
+  margin-bottom: 6px;
 }
 
-/* 🔥 核心：真正铺满宽度 */
+/* 行 */
 .row {
   display: grid;
-  grid-template-columns: 2.2fr 1fr 1fr 1fr auto;
+  grid-template-columns: 2fr 1fr 1fr 1fr auto;
   align-items: center;
-  gap: 6px;
-  width: 100%;
+  gap: 4px;
 }
 
-/* 防止撑开 */
+/* 防撑开 */
 .row div {
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
 }
 
-/* 字体 */
+/* 字体（🔥已整体缩小） */
 .name {
-  font-size: 16px;
-  font-weight: 600;
+  font-size: 14px;
+  font-weight: 500;
 }
 
 .codeInput {
   width: 100%;
-  font-size: 13px;
+  font-size: 12px;
 }
 
 .weight {
-  width: 60px;
-  font-size: 15px;
+  width: 55px;
+  font-size: 13px;
   text-align: center;
 }
 
 .change {
-  font-size: 15px;
-  font-weight: bold;
+  font-size: 13px;
+  font-weight: 500;
 }
 
 /* 颜色 */
@@ -97,15 +95,16 @@ h2 {
   color: white;
   border: none;
   border-radius: 4px;
-  padding: 4px 6px;
+  padding: 3px 6px;
+  font-size: 12px;
 }
 
 /* 总收益 */
 #total {
   text-align: center;
-  font-size: 32px;
+  font-size: 26px;
   font-weight: bold;
-  margin-top: 14px;
+  margin-top: 10px;
 }
 </style>
 </head>
@@ -139,7 +138,6 @@ async function getStockData(code) {
 
     let price = parseFloat(data[3]);
     let yesterday = parseFloat(data[4]);
-
     let change = ((price - yesterday) / yesterday) * 100;
 
     return {
@@ -185,7 +183,7 @@ async function calculate() {
 
   let totalEl = document.getElementById("total");
 
-  // 🔥 总结果改成4位
+  // 🔥 总结果4位
   totalEl.innerText = total.toFixed(4) + "%";
   totalEl.style.color = total >= 0 ? "#e53935" : "#2e7d32";
 }
