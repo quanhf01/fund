@@ -18,7 +18,7 @@ body {
   padding:6px;
 }
 
-/* 顶部汇总 */
+/* 顶部 */
 .summary {
   display:flex;
   background:#fff;
@@ -38,7 +38,7 @@ body {
   margin-top:4px;
 }
 
-/* ✅ 按钮并排 */
+/* 按钮 */
 .btn-row {
   display:flex;
   gap:6px;
@@ -54,38 +54,42 @@ body {
   border-radius:6px;
 }
 
-/* 表格 */
+/* ✅ 表格防撑开 */
 table {
   width:100%;
   border-collapse:collapse;
   background:#fff;
+  table-layout: fixed;
 }
 
 th, td {
-  padding:4px;
+  padding:2px;
   text-align:center;
+  overflow:hidden;
 }
 
 th {
   background:#eee;
+  font-size:11px;
 }
 
-/* 输入框不撑开 */
+/* 输入框 */
 input {
-  width:60px;
-  font-size:12px;
+  width:100%;
+  box-sizing:border-box;
+  font-size:11px;
   padding:2px;
 }
 
 .dateInput {
-  width:110px;
+  width:100%;
 }
 
 .delBtn {
   background:#ff4d4f;
   color:#fff;
   border:none;
-  padding:4px 6px;
+  padding:3px 5px;
   border-radius:4px;
 }
 </style>
@@ -99,12 +103,11 @@ input {
   <div>持仓<span id="sumHolding">0</span></div>
   <div>累计收益<span id="sumProfit">0</span></div>
   <div>
-    T+<input id="tDays" value="7" style="width:40px">金额
+    T+<input id="tDays" value="3" style="width:40px">金额
     <span id="sumT">0</span>
   </div>
 </div>
 
-<!-- ✅ 按钮并排 -->
 <div class="btn-row">
   <button onclick="addRow()">+ 新增一天</button>
   <button onclick="calculate()">🔄 刷新计算</button>
@@ -113,14 +116,14 @@ input {
 <table>
 <thead>
 <tr>
-<th>日期</th>
-<th>预估%</th>
-<th>实际%</th>
-<th>持仓</th>
-<th>收益</th>
-<th>操作</th>
-<th>最终</th>
-<th>删</th>
+<th style="width:90px">日期</th>
+<th style="width:50px">预估%</th>
+<th style="width:50px">实际%</th>
+<th style="width:60px">持仓</th>
+<th style="width:60px">收益</th>
+<th style="width:60px">操作</th>
+<th style="width:60px">最终</th>
+<th style="width:40px">删</th>
 </tr>
 </thead>
 
@@ -167,7 +170,6 @@ function calculate(){
 
   let totalProfit = 0;
 
-  // ===== 持仓收益 =====
   for(let i=0;i<rows.length;i++){
 
     if(i>0){
@@ -178,7 +180,6 @@ function calculate(){
     let a = parseFloat(rows[i].actual)||0;
     let act = Number(rows[i].action)||0;
 
-    // ✅ 修正：必须 /100
     let profit = h * (a / 100);
 
     rows[i].profit = profit.toFixed(2);
@@ -187,9 +188,10 @@ function calculate(){
     totalProfit += profit;
   }
 
-  // ===== T+N 队列 =====
-  let tDays = Number(document.getElementById("tDays").value)||7;
-  let now = new Date();
+  // ✅ 用最后一天日期（关键修复）
+  let now = rows.length ? new Date(rows[rows.length-1].date) : new Date();
+
+  let tDays = Number(document.getElementById("tDays").value)||3;
 
   let queue = [];
 
@@ -198,18 +200,15 @@ function calculate(){
     let act = Number(r.action)||0;
     let d = new Date(r.date);
 
-    // 加仓
     if(act>0){
       queue.push({amount:act,date:d});
     }
 
-    // 标记可用
     queue.forEach(q=>{
       let diff = (d - q.date)/(1000*60*60*24);
       q.ready = diff>=tDays;
     });
 
-    // 减仓（优先扣已解锁）
     if(act<0){
       let need = Math.abs(act);
 
@@ -227,7 +226,6 @@ function calculate(){
 
   });
 
-  // 当前可卖
   let tAmount = 0;
 
   queue.forEach(q=>{
