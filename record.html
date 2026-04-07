@@ -58,21 +58,19 @@ input {
   box-sizing: border-box;
 }
 
-/* 日期压缩 */
 .date-input {
   font-size: 11px;
   padding: 4px 2px;
-  line-height: 1.1;
 }
 
-/* 🔥 列宽终极压缩 */
-th:nth-child(1), td:nth-child(1) { width: 70px; }  /* 日期 */
-th:nth-child(2), td:nth-child(2) { width: 28px; }  /* 预估 */
-th:nth-child(3), td:nth-child(3) { width: 28px; }  /* 实际 */
-th:nth-child(4), td:nth-child(4) { width: 65px; }  /* 持仓 */
-th:nth-child(5), td:nth-child(5) { width: 55px; }  /* 加仓 */
-th:nth-child(6), td:nth-child(6) { width: 55px; }  /* 减仓 */
-th:nth-child(7), td:nth-child(7) { width: 70px; }  /* 最终 */
+/* 列宽重新分配🔥 */
+th:nth-child(1), td:nth-child(1) { width: 65px; }
+th:nth-child(2), td:nth-child(2) { width: 28px; }
+th:nth-child(3), td:nth-child(3) { width: 28px; }
+th:nth-child(4), td:nth-child(4) { width: 60px; }
+th:nth-child(5), td:nth-child(5) { width: 60px; } /* 收益 */
+th:nth-child(6), td:nth-child(6) { width: 60px; } /* 操作 */
+th:nth-child(7), td:nth-child(7) { width: 65px; }
 
 </style>
 </head>
@@ -90,8 +88,8 @@ th:nth-child(7), td:nth-child(7) { width: 70px; }  /* 最终 */
 <th>预估%</th>
 <th>实际%</th>
 <th>持仓</th>
-<th>加仓</th>
-<th>减仓</th>
+<th>收益</th>
+<th>操作</th>
 <th>最终</th>
 </tr>
 </thead>
@@ -112,8 +110,8 @@ function addRow(){
     estimate:"",
     actual:"",
     holding: prev,
-    buy:"",
-    sell:"",
+    profit:0,
+    action:"",
     final: prev
   });
 
@@ -136,10 +134,14 @@ function calculate(){
     }
 
     let h = Number(rows[i].holding)||0;
-    let b = Number(rows[i].buy)||0;
-    let s = Number(rows[i].sell)||0;
+    let a = Number(rows[i].actual)||0;
+    let act = Number(rows[i].action)||0;
 
-    rows[i].final = (h + b - s).toFixed(0);
+    /* 收益 = 实际% × 持仓 */
+    rows[i].profit = (h * a).toFixed(0);
+
+    /* 最终 = 持仓 + 收益 + 操作 */
+    rows[i].final = (h + Number(rows[i].profit) + act).toFixed(0);
   }
 
   save();
@@ -170,9 +172,9 @@ function render(){
 
 <td>${Number(r.holding).toFixed(0)}</td>
 
-<td><input value="${r.buy}" onchange="update(${i},'buy',this.value)"></td>
+<td>${Number(r.profit).toFixed(0)}</td>
 
-<td><input value="${r.sell}" onchange="update(${i},'sell',this.value)"></td>
+<td><input value="${r.action}" onchange="update(${i},'action',this.value)"></td>
 
 <td>${Number(r.final).toFixed(0)}</td>
 `;
