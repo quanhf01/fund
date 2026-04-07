@@ -59,7 +59,7 @@ th, td {
 
 th { background:#eee; font-size:11px; }
 
-/* 🔥 输入防撑 */
+/* 输入防撑 */
 input {
   width:100%;
   min-width:0;
@@ -108,16 +108,16 @@ input {
 
 <table>
 
-<!-- 🔥 终极锁宽（关键） -->
+<!-- ✅ 只改这里（重新分配宽度，更均衡不挤） -->
 <colgroup>
-  <col style="width:90px">
-  <col style="width:45px">
-  <col style="width:45px">
-  <col style="width:60px">
-  <col style="width:60px">
-  <col style="width:60px">
-  <col style="width:60px">
-  <col style="width:35px">
+  <col style="width:95px">  <!-- 日期（略加宽） -->
+  <col style="width:42px">
+  <col style="width:42px">
+  <col style="width:58px">
+  <col style="width:58px">
+  <col style="width:58px">
+  <col style="width:58px">
+  <col style="width:32px">  <!-- 删除（缩一点） -->
 </colgroup>
 
 <thead>
@@ -239,7 +239,7 @@ function calculate(){
 
   queue.forEach(q=>{
 
-    if(q.amount <= 0) return; // ✅ 过滤0
+    if(q.amount <= 0) return;
 
     let diff = (now - q.date)/(1000*60*60*24);
 
