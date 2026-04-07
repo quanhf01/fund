@@ -42,30 +42,32 @@ body {
   border-radius:6px;
 }
 
+/* 🔥 关键：外层横向滚动 */
+.table-wrap{
+  overflow-x:auto;
+}
+
 /* 表格 */
 table {
-  width:100%;
+  min-width:650px;   /* 🔥 核心：不再压缩 */
   border-collapse:collapse;
   background:#fff;
-  table-layout: fixed;
 }
 
 th, td {
-  padding:2px;
+  padding:4px;
   text-align:center;
-  overflow:hidden;
   white-space:nowrap;
 }
 
 th { background:#eee; font-size:11px; }
 
-/* 输入防撑 */
+/* 输入 */
 input {
   width:100%;
-  min-width:0;
   box-sizing:border-box;
   font-size:11px;
-  padding:2px;
+  text-align:center;
 }
 
 /* 删除按钮 */
@@ -106,19 +108,10 @@ input {
   <button onclick="calculate()">刷新计算</button>
 </div>
 
-<table>
+<!-- 🔥 包一层 -->
+<div class="table-wrap">
 
-<!-- ✅ 只改这里（重新分配宽度，更均衡不挤） -->
-<colgroup>
-  <col style="width:95px">  <!-- 日期（略加宽） -->
-  <col style="width:42px">
-  <col style="width:42px">
-  <col style="width:58px">
-  <col style="width:58px">
-  <col style="width:58px">
-  <col style="width:58px">
-  <col style="width:32px">  <!-- 删除（缩一点） -->
-</colgroup>
+<table>
 
 <thead>
 <tr>
@@ -136,6 +129,8 @@ input {
 <tbody id="tbody"></tbody>
 </table>
 
+</div>
+
 <div class="unlockBox" id="unlockBox">
 资金解锁明细：
 </div>
@@ -146,7 +141,6 @@ input {
 
 let rows = JSON.parse(localStorage.getItem("rows") || "[]");
 
-/* 新增 */
 function addRow(){
   let prev = rows.length ? Number(rows[rows.length-1].final) : 0;
 
@@ -163,19 +157,16 @@ function addRow(){
   save();
 }
 
-/* 删除 */
 function deleteRow(i){
   rows.splice(i,1);
   save();
 }
 
-/* 更新 */
 function updateRow(i,key,val){
   rows[i][key]=val;
   save();
 }
 
-/* 核心计算 */
 function calculate(){
 
   let totalProfit = 0;
@@ -263,13 +254,11 @@ function calculate(){
   save();
 }
 
-/* 保存 */
 function save(){
   localStorage.setItem("rows",JSON.stringify(rows));
   render();
 }
 
-/* 渲染 */
 function render(){
 
   let tb=document.getElementById("tbody");
