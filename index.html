@@ -4,43 +4,39 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>基金决策系统</title>
+<title>基金实时估算</title>
 
 <style>
 body {
-  font-family: -apple-system;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI";
   background: #f5f6f8;
   margin: 0;
-}
-
-/* 顶部 */
-.tabs {
-  display: flex;
-  background: white;
-}
-.tab {
-  flex: 1;
-  text-align: center;
   padding: 10px;
-  font-weight: bold;
-  border-bottom: 2px solid transparent;
-}
-.active {
-  color: #4CAF50;
-  border-bottom: 2px solid #4CAF50;
 }
 
-.page { display: none; padding: 10px; }
-.show { display: block; }
+h2 {
+  text-align: center;
+  font-size: 18px;
+  margin: 8px 0;
+}
 
-.btn {
+.add-btn {
   width: 100%;
   background: #4CAF50;
   color: white;
   padding: 8px;
   border-radius: 6px;
   border: none;
+  font-size: 14px;
   margin-bottom: 8px;
+}
+
+.header {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr 1fr auto;
+  font-size: 12px;
+  color: #666;
+  padding: 4px 6px;
 }
 
 .card {
@@ -51,196 +47,205 @@ body {
 }
 
 .row {
-  display: flex;
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr 1fr auto;
+  align-items: center;
   gap: 6px;
 }
 
-input, select {
-  flex: 1;
-  padding: 6px;
-  border-radius: 6px;
-  border: 1px solid #ddd;
+.row div {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
 }
 
-.total {
+/* 🔥 股票列优化 */
+.stock-box {
+  display: flex;
+  flex-direction: column;
+}
+
+.name {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.codeInput {
+  border: none;
+  border-bottom: 1px solid #ddd;
+  background: transparent;
+  font-size: 11px;
+  color: #999;
+  padding: 2px 0;
+}
+
+/* 🔥 占比美化（胶囊） */
+.weight-box {
+  display: flex;
+  justify-content: center;
+}
+
+.weight {
+  width: 60px;
+  border: none;
+  border-radius: 20px;
+  background: #f0f2f5;
   text-align: center;
-  font-size: 22px;
+  font-size: 13px;
+  padding: 4px 0;
+}
+
+/* 数据 */
+.change {
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.red { color: #e53935; }
+.green { color: #2e7d32; }
+
+.delete-btn {
+  background: #ff4d4f;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 3px 6px;
+  font-size: 12px;
+}
+
+/* 总收益 */
+#total {
+  text-align: center;
+  font-size: 26px;
   font-weight: bold;
+  margin-top: 10px;
 }
 </style>
 </head>
 
 <body>
 
-<div class="tabs">
-  <div class="tab active" onclick="switchTab(0)">📊 估值</div>
-  <div class="tab" onclick="switchTab(1)">📝 记录</div>
+<h2>基金实时估算</h2>
+
+<button class="add-btn" onclick="addRow()">➕ 添加股票</button>
+
+<div class="header">
+  <div>股票</div>
+  <div>占比</div>
+  <div>涨跌</div>
+  <div>影响</div>
+  <div></div>
 </div>
-
-<!-- ===== 估值页面 ===== -->
-<div class="page show" id="page1">
-
-<h3>基金实时估算</h3>
-
-<button class="btn" onclick="calculate()">刷新估值</button>
-<button class="btn" onclick="saveToday()">📥 写入今日记录</button>
 
 <div id="list"></div>
 
-<div id="total" class="total">0%</div>
-
-</div>
-
-<!-- ===== 记录页面 ===== -->
-<div class="page" id="page2">
-
-<h3>交易记录</h3>
-<button class="btn" onclick="addRecord()">➕ 添加记录</button>
-
-<div id="recordList"></div>
-<div id="summary" class="total"></div>
-
-</div>
+<div id="total">0%</div>
 
 <script>
 
-/* ===== 切换 ===== */
-function switchTab(i){
-  document.querySelectorAll(".tab").forEach(t=>t.classList.remove("active"));
-  document.querySelectorAll(".page").forEach(p=>p.classList.remove("show"));
-  document.querySelectorAll(".tab")[i].classList.add("active");
-  document.querySelectorAll(".page")[i].classList.add("show");
+async function getStockData(code) {
+  try {
+    let res = await fetch(`https://qt.gtimg.cn/q=${code}`);
+    let buffer = await res.arrayBuffer();
+    let text = new TextDecoder("gbk").decode(buffer);
+    let data = text.split("~");
+
+    let price = parseFloat(data[3]);
+    let yesterday = parseFloat(data[4]);
+    let change = ((price - yesterday) / yesterday) * 100;
+
+    return {
+      name: data[1],
+      change: change
+    };
+
+  } catch {
+    return { name: "-", change: 0 };
+  }
 }
 
-/* ===== 股票数据 ===== */
-let stocks = [
-  ["sh600900",4.78],
-  ["sh601668",4.4],
-  ["sh601939",2.76]
-];
+async function calculate() {
+  let cards = document.querySelectorAll(".card");
+  let total = 0;
 
-/* ===== 获取数据 ===== */
-async function getStock(code){
-  let res = await fetch(`https://qt.gtimg.cn/q=${code}`);
-  let buf = await res.arrayBuffer();
-  let txt = new TextDecoder("gbk").decode(buf);
-  let d = txt.split("~");
+  for (let card of cards) {
+    let code = card.querySelector(".codeInput").value.trim();
+    let weight = parseFloat(card.querySelector(".weight").value) / 100;
 
-  let p = parseFloat(d[3]);
-  let y = parseFloat(d[4]);
+    if (!code) continue;
 
-  return {
-    name:d[1],
-    change:(p-y)/y*100
-  };
-}
+    let data = await getStockData(code);
 
-/* ===== 渲染 ===== */
-async function calculate(){
-  let list = document.getElementById("list");
-  list.innerHTML="";
+    let change = data.change;
+    let impact = change * weight;
 
-  let total=0;
+    card.querySelector(".name").innerText = data.name;
 
-  for(let s of stocks){
-    let d = await getStock(s[0]);
-    let impact = d.change * s[1] / 100;
+    let changeEl = card.querySelector(".change");
+    changeEl.innerText = change.toFixed(2) + "%";
+    changeEl.className = "change " + (change >= 0 ? "red" : "green");
+
+    let impactEl = card.querySelector(".impact");
+    impactEl.innerText = impact.toFixed(4) + "%";
+    impactEl.className = "change " + (impact >= 0 ? "red" : "green");
+
     total += impact;
-
-    let div = document.createElement("div");
-    div.className="card";
-    div.innerHTML=`
-      ${d.name} (${s[0]})<br>
-      涨跌：${d.change.toFixed(2)}% ｜ 影响：${impact.toFixed(4)}%
-    `;
-    list.appendChild(div);
   }
 
-  document.getElementById("total").innerText = total.toFixed(4)+"%";
+  let totalEl = document.getElementById("total");
+  totalEl.innerText = total.toFixed(4) + "%";
+  totalEl.style.color = total >= 0 ? "#e53935" : "#2e7d32";
 }
 
-/* ===== 写入记录（核心🔥） ===== */
-function saveToday(){
-  let total = document.getElementById("total").innerText.replace("%","");
-  let d = new Date().toISOString().slice(0,10);
+function addRow(code="", weight=10) {
+  let div = document.createElement("div");
+  div.className = "card";
 
-  records.push({
-    date:d,
-    estimate:total,
-    actual:"",
-    action:"加仓",
-    amount:""
-  });
-
-  save();
-  alert("已写入今日预估！");
-}
-
-/* ===== 记录系统 ===== */
-let records = JSON.parse(localStorage.getItem("records")||"[]");
-
-function save(){
-  localStorage.setItem("records",JSON.stringify(records));
-  render();
-}
-
-function addRecord(){
-  let d = new Date().toISOString().slice(0,10);
-  records.push({date:d,estimate:"",actual:"",action:"加仓",amount:""});
-  save();
-}
-
-function render(){
-  let list=document.getElementById("recordList");
-  list.innerHTML="";
-
-  let total=0;
-  let canSell=0;
-  let now=Date.now();
-
-  records.forEach((r,i)=>{
-    let days=(now-new Date(r.date))/86400000;
-
-    if(r.action==="加仓"){
-      total+=Number(r.amount||0);
-      if(days>=30) canSell+=Number(r.amount||0);
-    }
-    if(r.action==="减仓"){
-      total-=Number(r.amount||0);
-    }
-
-    let div=document.createElement("div");
-    div.className="card";
-
-    div.innerHTML=`
+  div.innerHTML = `
     <div class="row">
-      <input type="date" value="${r.date}" onchange="update(${i},'date',this.value)">
-      <input value="${r.estimate}" onchange="update(${i},'estimate',this.value)">
-      <input value="${r.actual}" onchange="update(${i},'actual',this.value)">
-    </div>
-    <div class="row">
-      <select onchange="update(${i},'action',this.value)">
-        <option ${r.action==='加仓'?'selected':''}>加仓</option>
-        <option ${r.action==='减仓'?'selected':''}>减仓</option>
-      </select>
-      <input value="${r.amount}" onchange="update(${i},'amount',this.value)">
-    </div>
-    持有${days.toFixed(0)}天 ${days>=30?'✅':''}
-    `;
+      
+      <div class="stock-box">
+        <div class="name">--</div>
+        <input class="codeInput" value="${code}" placeholder="sh600900">
+      </div>
 
-    list.appendChild(div);
-  });
+      <div class="weight-box">
+        <input class="weight" value="${weight}">
+      </div>
 
-  document.getElementById("summary").innerText =
-    `总投入:${total} ｜ 满30天:${canSell}`;
+      <div class="change">-</div>
+
+      <div class="impact">-</div>
+
+      <button class="delete-btn" onclick="this.parentNode.parentNode.remove()">删</button>
+
+    </div>
+  `;
+
+  document.getElementById("list").appendChild(div);
 }
 
-function update(i,k,v){
-  records[i][k]=v;
-  save();
+function init() {
+  let stocks = [
+    ["sh600900",4.78],
+    ["sh601668",4.4],
+    ["sh601939",2.76],
+    ["sh600028",2.32],
+    ["sh600941",1.91],
+    ["sh688009",1.91],
+    ["sh601088",1.68],
+    ["sh601398",1.61],
+    ["sh601988",1.59],
+    ["sh601225",1.28]
+  ];
+
+  for (let s of stocks) addRow(s[0], s[1]);
+
+  calculate();
 }
 
-render();
+init();
+setInterval(calculate, 5000);
 
 </script>
 
