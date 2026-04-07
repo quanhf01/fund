@@ -28,25 +28,22 @@
 </thead>
 
 <tbody id="tbody">
-<tr>
-  <td><input placeholder="sh600900"></td>
-  <td><input value="20"></td>
-  <td>-</td>
-  <td>-</td>
-  <td><button onclick="deleteRow(this)">删除</button></td>
-</tr>
 </tbody>
 </table>
 
 <h3 id="total">总涨跌：0%</h3>
 
 <script>
-// 获取数据
+
+// 获取股票数据（已修复乱码）
 async function getStockData(code) {
   try {
     let url = `https://qt.gtimg.cn/q=${code}`;
     let res = await fetch(url);
-    let text = await res.text();
+
+    let buffer = await res.arrayBuffer();
+    let text = new TextDecoder("gbk").decode(buffer);
+
     let data = text.split("~");
 
     return {
@@ -64,8 +61,8 @@ async function calculate() {
   let total = 0;
 
   for (let row of rows) {
-    let codeInput = row.cells[0].querySelector("input");
-    let weightInput = row.cells[1].querySelector("input");
+    let codeInput = row.querySelector(".code");
+    let weightInput = row.querySelector(".weight");
 
     let code = codeInput.value.trim();
     let weight = parseFloat(weightInput.value) / 100;
@@ -74,17 +71,14 @@ async function calculate() {
 
     let data = await getStockData(code);
 
-    // 显示名称
-    row.cells[0].innerHTML = `
-      <input value="${code}" style="width:80px">
-      <div style="font-size:12px;color:#666">${data.name}</div>
-    `;
+    // 显示名称（不会再乱码）
+    row.querySelector(".name").innerText = data.name;
 
     let change = data.change;
     let impact = change * weight;
 
-    row.cells[2].innerText = change.toFixed(2) + "%";
-    row.cells[3].innerText = impact.toFixed(2) + "%";
+    row.querySelector(".change").innerText = change.toFixed(2) + "%";
+    row.querySelector(".impact").innerText = impact.toFixed(2) + "%";
 
     total += impact;
   }
@@ -94,15 +88,18 @@ async function calculate() {
 }
 
 // 添加行
-function addRow() {
+function addRow(code="", weight=10) {
   let tbody = document.getElementById("tbody");
 
   let tr = document.createElement("tr");
   tr.innerHTML = `
-    <td><input placeholder="sh600900"></td>
-    <td><input value="10"></td>
-    <td>-</td>
-    <td>-</td>
+    <td>
+      <input class="code" value="${code}" placeholder="sh600900">
+      <div class="name" style="font-size:12px;color:#666"></div>
+    </td>
+    <td><input class="weight" value="${weight}"></td>
+    <td class="change">-</td>
+    <td class="impact">-</td>
     <td><button onclick="deleteRow(this)">删除</button></td>
   `;
 
@@ -111,13 +108,36 @@ function addRow() {
 
 // 删除行
 function deleteRow(btn) {
-  let row = btn.parentNode.parentNode;
-  row.remove();
+  btn.parentNode.parentNode.remove();
 }
+
+// ⭐ 初始化（直接给你10只）
+function init() {
+  let stocks = [
+    ["sh600900",20],
+    ["sh601668",10],
+    ["sh601939",10],
+    ["sh600028",10],
+    ["sh600941",10],
+    ["sh688009",10],
+    ["sh601088",10],
+    ["sh601398",10],
+    ["sh601988",10],
+    ["sh601225",10]
+  ];
+
+  for (let s of stocks) {
+    addRow(s[0], s[1]);
+  }
+
+  calculate();
+}
+
+init();
 
 // 自动刷新
 setInterval(calculate, 5000);
-calculate();
+
 </script>
 
 </body>
