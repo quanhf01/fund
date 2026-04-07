@@ -3,102 +3,26 @@
 <head>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta charset="utf-8">
-
 <title>每日记录</title>
 
 <style>
-body {
-  margin: 0;
-  font-family: -apple-system;
-  background: #f5f6f8;
-  font-size: 11px;
-}
+body { margin:0; font-family:-apple-system; background:#f5f6f8; font-size:11px;}
+.container { padding:4px;}
+.summary { display:flex; background:white; border-radius:8px; padding:6px; margin-bottom:6px;}
+.summary div { flex:1; text-align:center;}
+.summary span { display:block; font-weight:bold; margin-top:3px;}
+button { width:100%; background:#4CAF50; color:white; border:none; padding:8px; border-radius:6px; margin-bottom:6px;}
 
-.container {
-  padding: 4px;
-}
+table { width:100%; border-collapse:collapse; background:white;}
+th,td { padding:2px; text-align:center;}
+th { background:#eee;}
 
-.summary {
-  display: flex;
-  background: white;
-  border-radius: 8px;
-  padding: 6px;
-  margin-bottom: 6px;
-}
-
-.summary div {
-  flex: 1;
-  text-align: center;
-}
-
-.summary span {
-  display: block;
-  font-weight: bold;
-  margin-top: 3px;
-}
-
-button {
-  width: 100%;
-  background: #4CAF50;
-  color: white;
-  border: none;
-  padding: 8px;
-  border-radius: 6px;
-  margin-bottom: 6px;
-  font-size: 12px;
-}
-
-/* 表格 */
-table {
-  width: 100%;
-  border-collapse: collapse;
-  background: white;
-}
-
-/* 列宽优化 */
-th:nth-child(1), td:nth-child(1) { width: 80px; }
-th:nth-child(2), td:nth-child(2) { width: 45px; }
-th:nth-child(3), td:nth-child(3) { width: 45px; }
-th:nth-child(4), td:nth-child(4) { width: 60px; }
-th:nth-child(5), td:nth-child(5) { width: 60px; }
-th:nth-child(6), td:nth-child(6) { width: 55px; }
-th:nth-child(7), td:nth-child(7) { width: 70px; }
-th:nth-child(8), td:nth-child(8) { width: 40px; }
-
-th {
-  background: #eee;
-  padding: 3px;
-}
-
-td {
-  padding: 2px;
-  text-align: center;
-}
-
-input {
-  width: 100%;
-  font-size: 10px;
-  padding: 2px;
-  box-sizing: border-box;
-}
-
-.dateInput {
-  font-size: 9px;
-}
-
-.delBtn {
-  background: #ff4d4f;
-  color: white;
-  border: none;
-  padding: 4px;
-  border-radius: 4px;
-  font-size: 10px;
-}
+input { width:100%; font-size:10px; padding:2px;}
+.delBtn { background:#ff4d4f; color:white; border:none; padding:4px; border-radius:4px;}
 </style>
 </head>
 
 <body>
-
 <div class="container">
 
 <div class="summary">
@@ -125,7 +49,6 @@ input {
 <th>删</th>
 </tr>
 </thead>
-
 <tbody id="tbody"></tbody>
 </table>
 
@@ -140,106 +63,129 @@ function addRow() {
 
   rows.push({
     date: new Date().toISOString().slice(0,10),
-    estimate: "",
-    actual: "",
-    holding: prev,
-    profit: 0,
-    action: 0,
-    final: prev
+    estimate:"",
+    actual:"",
+    holding:prev,
+    profit:0,
+    action:0,
+    final:prev
   });
 
   save();
 }
 
-function deleteRow(i) {
-  rows.splice(i, 1);
+function deleteRow(i){
+  rows.splice(i,1);
   calculate();
 }
 
-function updateRow(i, key, val) {
-  rows[i][key] = val;
+function updateRow(i,key,val){
+  rows[i][key]=val;
   calculate();
 }
 
-function calculate() {
+function calculate(){
 
   let totalProfit = 0;
 
-  // ✅ 主账户计算（不变）
-  for (let i = 0; i < rows.length; i++) {
+  // ✅ 持仓系统
+  for(let i=0;i<rows.length;i++){
 
-    if (i > 0) {
-      rows[i].holding = Number(rows[i - 1].final);
+    if(i>0){
+      rows[i].holding = Number(rows[i-1].final);
     }
 
-    let h = Number(rows[i].holding) || 0;
-    let a = parseFloat(rows[i].actual) || 0;
-    let act = Number(rows[i].action) || 0;
+    let h = Number(rows[i].holding)||0;
+    let a = parseFloat(rows[i].actual)||0;
+    let act = Number(rows[i].action)||0;
 
-    let profit = h * (a / 100);
+    let profit = h*(a/100);
 
     rows[i].profit = profit.toFixed(2);
-    rows[i].final = (h + profit + act).toFixed(0);
+    rows[i].final = (h+profit+act).toFixed(0);
 
     totalProfit += profit;
   }
 
-  // ✅ T+资金（独立逻辑）
-  let tAmount = 0;
+  // ✅ T+队列系统（核心）
+  let tDays = Number(document.getElementById("tDays").value)||7;
   let now = new Date();
-  let tDays = Number(document.getElementById("tDays").value) || 7;
 
-  rows.forEach(r => {
-    let act = Number(r.action) || 0;
+  let queue = [];
 
-    if (act > 0 && r.date) {
+  rows.forEach(r=>{
 
-      let buyDate = new Date(r.date);
-      let diffDays = (now - buyDate) / (1000 * 60 * 60 * 24);
+    let act = Number(r.action)||0;
+    let d = new Date(r.date);
 
-      if (diffDays >= tDays) {
-        tAmount += act; // ✅ 只统计本金
+    // 加仓入队
+    if(act>0){
+      queue.push({amount:act,date:d});
+    }
+
+    // 标记是否解锁
+    queue.forEach(q=>{
+      let diff = (d - q.date)/(1000*60*60*24);
+      q.ready = diff>=tDays;
+    });
+
+    // 减仓消耗（FIFO）
+    if(act<0){
+      let need = Math.abs(act);
+
+      for(let i=0;i<queue.length;i++){
+        let q = queue[i];
+        if(!q.ready) continue;
+
+        let use = Math.min(q.amount,need);
+        q.amount -= use;
+        need -= use;
+
+        if(need===0) break;
       }
     }
   });
 
-  let last = rows[rows.length - 1] || {};
+  // 统计当前可卖金额
+  let tAmount = 0;
 
-  document.getElementById("sumHolding").innerText = last.final || 0;
+  queue.forEach(q=>{
+    let diff = (now - q.date)/(1000*60*60*24);
+    if(diff>=tDays){
+      tAmount += q.amount;
+    }
+  });
+
+  let last = rows[rows.length-1]||{};
+
+  document.getElementById("sumHolding").innerText = last.final||0;
   document.getElementById("sumProfit").innerText = totalProfit.toFixed(2);
   document.getElementById("sumT").innerText = tAmount;
 
   save();
 }
 
-function save() {
-  localStorage.setItem("rows", JSON.stringify(rows));
+function save(){
+  localStorage.setItem("rows",JSON.stringify(rows));
   render();
 }
 
-function render() {
-  let tb = document.getElementById("tbody");
-  tb.innerHTML = "";
+function render(){
+  let tb=document.getElementById("tbody");
+  tb.innerHTML="";
 
-  rows.forEach((r, i) => {
+  rows.forEach((r,i)=>{
 
-    let tr = document.createElement("tr");
+    let tr=document.createElement("tr");
 
-    tr.innerHTML = `
-<td><input class="dateInput" type="date" value="${r.date}" onchange="updateRow(${i},'date',this.value)"></td>
-
+    tr.innerHTML=`
+<td><input type="date" value="${r.date}" onchange="updateRow(${i},'date',this.value)"></td>
 <td><input value="${r.estimate}" onchange="updateRow(${i},'estimate',this.value)"></td>
-
 <td><input value="${r.actual}" onchange="updateRow(${i},'actual',this.value)"></td>
-
 <td>${Number(r.holding).toFixed(0)}</td>
-
 <td>${Number(r.profit).toFixed(2)}</td>
-
 <td><input value="${r.action}" onchange="updateRow(${i},'action',this.value)"></td>
-
 <td>${Number(r.final).toFixed(0)}</td>
-
 <td><button class="delBtn" onclick="deleteRow(${i})">删</button></td>
 `;
 
@@ -250,6 +196,5 @@ function render() {
 render();
 
 </script>
-
 </body>
 </html>
