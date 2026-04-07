@@ -14,95 +14,91 @@ body {
 
 h2 {
   text-align: center;
-  margin: 10px 0;
   font-size: 20px;
 }
 
-button {
-  border: none;
-  border-radius: 6px;
-  padding: 6px 10px;
-}
-
+/* 按钮 */
 .add-btn {
   width: 100%;
   background: #4CAF50;
   color: white;
-  margin-bottom: 8px;
+  padding: 10px;
+  border-radius: 6px;
+  border: none;
   font-size: 16px;
+  margin-bottom: 10px;
 }
 
 /* 表头 */
 .header {
   display: grid;
-  grid-template-columns: 8ch 6ch 6ch 7ch 4ch;
+  grid-template-columns: 2fr 1fr 1fr 1fr auto;
   font-size: 14px;
   color: #666;
-  padding: 6px 6px;
+  padding: 6px;
 }
 
-/* 每行 */
+/* 卡片 */
 .card {
   background: white;
   border-radius: 8px;
-  padding: 6px;
-  margin-bottom: 6px;
+  padding: 8px;
+  margin-bottom: 8px;
 }
 
+/* 行布局（🔥核心修复：自适应宽度） */
 .row {
   display: grid;
-  grid-template-columns: 8ch 6ch 6ch 7ch 4ch;
+  grid-template-columns: 2fr 1fr 1fr 1fr auto;
   align-items: center;
-  gap: 4px;
+  gap: 6px;
 }
 
-/* 防撑开 */
-.row div, .header div {
+/* 防止挤压 */
+.row div {
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
 }
 
-/* 字体放大 */
+/* 字体 */
 .name {
-  font-size: 15px;
-  font-weight: 500;
+  font-size: 16px;
+  font-weight: 600;
 }
 
 .code input {
+  width: 90%;
   font-size: 13px;
-  color: #888;
-  border: 1px solid #eee;
-  border-radius: 4px;
-  width: 60px;
 }
 
 .weight {
-  width: 50px;
+  width: 60px;
+  font-size: 15px;
   text-align: center;
-  border-radius: 4px;
-  border: 1px solid #ddd;
-  font-size: 14px;
 }
 
 .change {
-  font-weight: bold;
   font-size: 15px;
+  font-weight: bold;
 }
 
+/* 颜色 */
 .red { color: #e53935; }
 .green { color: #2e7d32; }
 
 .delete-btn {
   background: #ff4d4f;
   color: white;
-  font-size: 12px;
+  border: none;
+  border-radius: 4px;
+  padding: 4px 6px;
 }
 
 /* 总收益 */
 #total {
   text-align: center;
-  font-size: 28px;
+  font-size: 30px;
   font-weight: bold;
   margin-top: 14px;
 }
@@ -129,6 +125,7 @@ button {
 
 <script>
 
+// 🔥 修复：用价格计算涨幅（最准）
 async function getStockData(code) {
   try {
     let res = await fetch(`https://qt.gtimg.cn/q=${code}`);
@@ -136,10 +133,16 @@ async function getStockData(code) {
     let text = new TextDecoder("gbk").decode(buffer);
     let data = text.split("~");
 
+    let price = parseFloat(data[3]);
+    let yesterday = parseFloat(data[4]);
+
+    let change = ((price - yesterday) / yesterday) * 100;
+
     return {
       name: data[1],
-      change: parseFloat(data[32])
+      change: change
     };
+
   } catch {
     return { name: "-", change: 0 };
   }
@@ -150,11 +153,8 @@ async function calculate() {
   let total = 0;
 
   for (let card of cards) {
-    let codeInput = card.querySelector(".codeInput");
-    let weightInput = card.querySelector(".weight");
-
-    let code = codeInput.value.trim();
-    let weight = parseFloat(weightInput.value) / 100;
+    let code = card.querySelector(".codeInput").value.trim();
+    let weight = parseFloat(card.querySelector(".weight").value) / 100;
 
     if (!code) continue;
 
@@ -171,7 +171,7 @@ async function calculate() {
     changeEl.innerText = change.toFixed(2) + "%";
     changeEl.className = "change " + (change >= 0 ? "red" : "green");
 
-    // 影响（🔥4位小数）
+    // 🔥 影响（4位小数）
     let impactEl = card.querySelector(".impact");
     impactEl.innerText = impact.toFixed(4) + "%";
     impactEl.className = "change " + (impact >= 0 ? "red" : "green");
@@ -193,9 +193,7 @@ function addRow(code="", weight=10) {
       
       <div>
         <div class="name">--</div>
-        <div class="code">
-          <input class="codeInput" value="${code}" placeholder="sh600900">
-        </div>
+        <input class="codeInput" value="${code}" placeholder="sh600900">
       </div>
 
       <div>
@@ -228,9 +226,7 @@ function init() {
     ["sh601225",1.28]
   ];
 
-  for (let s of stocks) {
-    addRow(s[0], s[1]);
-  }
+  for (let s of stocks) addRow(s[0], s[1]);
 
   calculate();
 }
