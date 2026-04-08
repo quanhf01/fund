@@ -3,7 +3,6 @@
 <head>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta charset="utf-8">
-<title>每日记录</title>
 
 <style>
 body{
@@ -14,14 +13,6 @@ body{
 }
 .container{ padding:6px; }
 
-.top-fixed{
-  position:sticky;
-  top:0;
-  z-index:10;
-  background:#f5f6f8;
-  padding-bottom:6px;
-}
-
 .summary{
   display:flex;
   background:#fff;
@@ -29,20 +20,10 @@ body{
   padding:12px 6px;
   margin-bottom:6px;
 }
-.summary div{
-  flex:1;
-  text-align:center;
-}
-.summary span{
-  display:block;
-  font-weight:bold;
-  font-size:22px;
-}
+.summary div{ flex:1;text-align:center; }
+.summary span{ font-size:22px;font-weight:bold; }
 
-.btn-row{
-  display:flex;
-  gap:6px;
-}
+.btn-row{ display:flex;gap:6px; }
 .btn-row button{
   flex:1;
   background:#4CAF50;
@@ -54,27 +35,27 @@ body{
 
 table{
   width:100%;
-  border-collapse:collapse;
   background:#fff;
   table-layout:fixed;
+  border-collapse:collapse;
 }
 
-th:nth-child(1), td:nth-child(1){ width:6%; }
-th:nth-child(2), td:nth-child(2){ width:20%; }
-th:nth-child(3), td:nth-child(3){ width:10%; }
-th:nth-child(4), td:nth-child(4){ width:10%; }
-th:nth-child(5), td:nth-child(5){ width:12%; }
-th:nth-child(6), td:nth-child(6){ width:12%; }
-th:nth-child(7), td:nth-child(7){ width:12%; }
-th:nth-child(8), td:nth-child(8){ width:10%; }
-th:nth-child(9), td:nth-child(9){ width:8%; }
+/* ✅ 调整列宽（重点修复日期） */
+th:nth-child(1),td:nth-child(1){width:6%;}
+th:nth-child(2),td:nth-child(2){width:28%;} /* 日期加宽 */
+th:nth-child(3),td:nth-child(3){width:9%;}
+th:nth-child(4),td:nth-child(4){width:9%;}
+th:nth-child(5),td:nth-child(5){width:10%;}
+th:nth-child(6),td:nth-child(6){width:10%;}
+th:nth-child(7),td:nth-child(7){width:10%;}
+th:nth-child(8),td:nth-child(8){width:10%;}
+th:nth-child(9),td:nth-child(9){width:8%;}
 
 th,td{
   text-align:center;
   padding:2px;
   white-space:nowrap;
 }
-
 th{ background:#eee; }
 
 input{
@@ -84,11 +65,10 @@ input{
   box-sizing:border-box;
 }
 
-.delBtn{
-  background:#ff4d4f;
-  color:#fff;
-  border:none;
-  border-radius:4px;
+/* ✅ 日期输入不截断 */
+.dateInput{
+  font-size:12px;
+  width:100%;
 }
 
 .week{
@@ -96,11 +76,26 @@ input{
   color:#888;
 }
 
+.delBtn{
+  background:#ff4d4f;
+  color:#fff;
+  border:none;
+  border-radius:4px;
+}
+
+/* ✅ 四列布局 */
 .unlockBox{
   background:#fff;
   margin-top:6px;
   padding:6px;
   border-radius:6px;
+}
+
+.unlockGrid{
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:4px;
+  font-size:11px;
 }
 </style>
 </head>
@@ -108,8 +103,6 @@ input{
 <body>
 
 <div class="container">
-
-<div class="top-fixed">
 
 <div class="summary">
   <div>持仓<span id="sumHolding">0</span></div>
@@ -123,8 +116,6 @@ input{
 <div class="btn-row">
   <button onclick="addRow()">+ 新增一天</button>
   <button onclick="calculate()">刷新计算</button>
-</div>
-
 </div>
 
 <table>
@@ -144,7 +135,10 @@ input{
 <tbody id="tbody"></tbody>
 </table>
 
-<div class="unlockBox" id="unlockBox">资金解锁明细：</div>
+<div class="unlockBox">
+  <div>资金解锁明细：</div>
+  <div class="unlockGrid" id="unlockBox"></div>
+</div>
 
 </div>
 
@@ -158,28 +152,12 @@ function getWeekday(d){
 
 function addRow(){
   let prev = rows.length ? Number(rows[rows.length-1].final) : 0;
-
-  rows.push({
-    date:"",
-    estimate:"",
-    actual:"",
-    holding:prev,
-    profit:0,
-    action:0,
-    final:prev
-  });
+  rows.push({date:"",estimate:"",actual:"",holding:prev,profit:0,action:0,final:prev});
   save();
 }
 
-function updateRow(i,key,val){
-  rows[i][key]=val;
-  save();
-}
-
-function updateDate(i,val){
-  rows[i].date=val;
-  save();
-}
+function updateRow(i,key,val){ rows[i][key]=val; save(); }
+function updateDate(i,val){ rows[i].date=val; save(); }
 
 function deleteRow(i){
   if(confirm("确定删除吗？")){
@@ -193,12 +171,7 @@ function calculate(){
   let totalProfit=0;
 
   for(let i=0;i<rows.length;i++){
-
-    if(i===0){
-      rows[i].holding=0;
-    }else{
-      rows[i].holding=Number(rows[i-1].final);
-    }
+    rows[i].holding = i===0 ? 0 : Number(rows[i-1].final);
 
     let h=Number(rows[i].holding)||0;
     let a=parseFloat(rows[i].actual)||0;
@@ -213,7 +186,6 @@ function calculate(){
   }
 
   let tDays=Number(document.getElementById("tDays").value)||3;
-
   let queue=[];
   let now=new Date();
 
@@ -221,17 +193,13 @@ function calculate(){
     let act=Number(r.action)||0;
     let d=new Date(r.date);
 
-    if(act>0){
-      queue.push({amount:act,date:d});
-    }
+    if(act>0){ queue.push({amount:act,date:d}); }
 
     if(act<0){
       let need=Math.abs(act);
-      for(let i=0;i<queue.length;i++){
-        let q=queue[i];
+      for(let q of queue){
         let diff=(d-q.date)/(1000*60*60*24);
         if(diff<tDays) continue;
-
         let use=Math.min(q.amount,need);
         q.amount-=use;
         need-=use;
@@ -250,10 +218,10 @@ function calculate(){
 
     if(diff>=tDays){
       tAmount+=q.amount;
-      html+=`<div>${q.amount}（可用）</div>`;
+      html+=`<div>${q.amount}(可用)</div>`;
     }else{
       let left=Math.ceil(tDays-diff);
-      html+=`<div>${q.amount}（剩${left}天）</div>`;
+      html+=`<div>${q.amount}(剩${left}天)</div>`;
     }
   });
 
@@ -262,7 +230,7 @@ function calculate(){
   document.getElementById("sumHolding").innerText=last.final||0;
   document.getElementById("sumProfit").innerText=totalProfit.toFixed(2);
   document.getElementById("sumT").innerText=tAmount;
-  document.getElementById("unlockBox").innerHTML="资金解锁明细："+html;
+  document.getElementById("unlockBox").innerHTML=html;
 
   save();
 }
@@ -285,7 +253,7 @@ function render(){
 <td>${i+1}</td>
 
 <td>
-<input type="date" value="${r.date}" onchange="updateDate(${i},this.value)">
+<input type="date" class="dateInput" value="${r.date}" onchange="updateDate(${i},this.value)">
 <div class="week">${r.date ? "周"+getWeekday(new Date(r.date)) : ""}</div>
 </td>
 
