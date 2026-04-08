@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="utf-8">
+
+<title>基金工具</title>
+
+<style>
+body{
+  margin:0;
+  font-family:-apple-system;
+  background:#f5f6f8;
+}
+
+/* 顶部切换 */
+.tabs{
+  display:flex;
+  position:sticky;
+  top:0;
+  background:#fff;
+  z-index:10;
+}
+.tabs button{
+  flex:1;
+  padding:10px;
+  border:none;
+  background:#eee;
+}
+.tabs .active{
+  background:#4CAF50;
+  color:#fff;
+}
+
+/* 页面 */
+.page{ display:none; padding:10px; }
+.activePage{ display:block; }
+
+/* ===== 表1样式 ===== */
+.card{background:#fff;border-radius:10px;padding:8px;margin-bottom:6px;}
+.row{display:grid;grid-template-columns:2fr 1fr 1fr 1fr auto;gap:6px;align-items:center;}
+.name{font-size:14px;font-weight:600;}
+.codeInput{border:none;border-bottom:1px solid #ddd;font-size:11px;}
+.weight{width:60px;border-radius:20px;background:#f0f2f5;text-align:center;}
+.change{font-size:13px;}
+.red{color:#e53935;}
+.green{color:#2e7d32;}
+.delete-btn{background:#ff4d4f;color:#fff;border:none;border-radius:4px;}
+.add-btn{width:100%;background:#4CAF50;color:#fff;padding:8px;border:none;border-radius:6px;margin-bottom:6px;}
+#total{text-align:center;font-size:24px;font-weight:bold;}
+
+/* ===== 表2简单版 ===== */
+table{
+  width:100%;
+  background:#fff;
+  border-collapse:collapse;
+  font-size:12px;
+}
+th,td{
+  padding:4px;
+  text-align:center;
+}
+th{background:#eee;}
+</style>
+</head>
+
+<body>
+
+<!-- 切换按钮 -->
+<div class="tabs">
+  <button class="active" onclick="switchTab(0)">📊 实时估算</button>
+  <button onclick="switchTab(1)">📅 每日记录</button>
+</div>
+
+<!-- ===== 表1 ===== -->
+<div class="page activePage" id="page1">
+
+<button class="add-btn" onclick="addRow()">➕ 添加股票</button>
+<div id="list"></div>
+<div id="total">0%</div>
+
+</div>
+
+<!-- ===== 表2 ===== -->
+<div class="page" id="page2">
+
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>日期</th>
+<th>操作</th>
+</tr>
+</thead>
+<tbody id="tb2"></tbody>
+</table>
+
+<button class="add-btn" onclick="addRow2()">+新增</button>
+
+</div>
+
+<script>
+
+/* 切换 */
+function switchTab(i){
+  document.querySelectorAll(".tabs button").forEach(b=>b.classList.remove("active"));
+  document.querySelectorAll(".page").forEach(p=>p.classList.remove("activePage"));
+
+  document.querySelectorAll(".tabs button")[i].classList.add("active");
+  document.querySelectorAll(".page")[i].classList.add("activePage");
+}
+
+/* ===== 表1 ===== */
+async function getStockData(code){
+  try{
+    let res=await fetch(`https://qt.gtimg.cn/q=${code}`);
+    let buf=await res.arrayBuffer();
+    let txt=new TextDecoder("gbk").decode(buf);
+    let d=txt.split("~");
+
+    let p=parseFloat(d[3]);
+    let y=parseFloat(d[4]);
+    let c=((p-y)/y)*100;
+
+    return {name:d[1],change:c};
+  }catch{
+    return {name:"-",change:0};
+  }
+}
+
+async function calculate(){
+  let cards=document.querySelectorAll(".card");
+  let total=0;
+
+  for(let c of cards){
+    let code=c.querySelector(".codeInput").value.trim();
+    let w=parseFloat(c.querySelector(".weight").value)/100;
+
+    if(!code)continue;
+
+    let d=await getStockData(code);
+    let impact=d.change*w;
+
+    c.querySelector(".name").innerText=d.name;
+
+    let ce=c.querySelector(".change");
+    ce.innerText=d.change.toFixed(2)+"%";
+    ce.className="change "+(d.change>=0?"red":"green");
+
+    let ie=c.querySelector(".impact");
+    ie.innerText=impact.toFixed(4)+"%";
+    ie.className="change "+(impact>=0?"red":"green");
+
+    total+=impact;
+  }
+
+  let t=document.getElementById("total");
+  t.innerText=total.toFixed(4)+"%";
+  t.style.color=total>=0?"#e53935":"#2e7d32";
+}
+
+function addRow(code="",weight=10){
+  let div=document.createElement("div");
+  div.className="card";
+
+  div.innerHTML=`
+  <div class="row">
+    <div>
+      <div class="name">--</div>
+      <input class="codeInput" value="${code}">
+    </div>
+    <input class="weight" value="${weight}">
+    <div class="change">-</div>
+    <div class="impact">-</div>
+    <button class="delete-btn" onclick="this.parentNode.parentNode.remove()">删</button>
+  </div>`;
+
+  document.getElementById("list").appendChild(div);
+}
+
+setInterval(calculate,5000);
+
+/* ===== 表2 ===== */
+let rows2=[];
+
+function addRow2(){
+  rows2.push({date:""});
+  render2();
+}
+
+function render2(){
+  let tb=document.getElementById("tb2");
+  tb.innerHTML="";
+
+  rows2.forEach((r,i)=>{
+    let tr=document.createElement("tr");
+
+    tr.innerHTML=`
+    <td>${i+1}</td>
+    <td><input type="date" value="${r.date}" onchange="rows2[${i}].date=this.value"></td>
+    <td><button onclick="rows2.splice(${i},1);render2()">删</button></td>
+    `;
+
+    tb.appendChild(tr);
+  });
+}
+
+</script>
+
+</body>
+</html>
