@@ -32,7 +32,6 @@ body{
 .summary div{
   flex:1;
   text-align:center;
-  font-size:15px;
 }
 .summary span{
   display:block;
@@ -60,29 +59,28 @@ table{
   table-layout:fixed;
 }
 
-th:nth-child(1), td:nth-child(1){ width:6%; }   /* 序号 */
-th:nth-child(2), td:nth-child(2){ width:22%; }  /* 日期 */
+th:nth-child(1), td:nth-child(1){ width:6%; }
+th:nth-child(2), td:nth-child(2){ width:20%; }
 th:nth-child(3), td:nth-child(3){ width:10%; }
 th:nth-child(4), td:nth-child(4){ width:10%; }
 th:nth-child(5), td:nth-child(5){ width:12%; }
 th:nth-child(6), td:nth-child(6){ width:12%; }
 th:nth-child(7), td:nth-child(7){ width:12%; }
 th:nth-child(8), td:nth-child(8){ width:10%; }
-th:nth-child(9), td:nth-child(9){ width:6%; }
+th:nth-child(9), td:nth-child(9){ width:8%; }
 
 th,td{
   text-align:center;
   padding:2px;
-  font-size:12px;
   white-space:nowrap;
 }
 
 th{ background:#eee; }
 
-input, select{
+input{
   width:100%;
-  font-size:12px;
   text-align:center;
+  font-size:12px;
   box-sizing:border-box;
 }
 
@@ -91,6 +89,11 @@ input, select{
   color:#fff;
   border:none;
   border-radius:4px;
+}
+
+.week{
+  font-size:10px;
+  color:#888;
 }
 
 .unlockBox{
@@ -149,39 +152,15 @@ input, select{
 
 let rows = JSON.parse(localStorage.getItem("rows") || "[]");
 
-/* 星期 */
 function getWeekday(d){
   return ["日","一","二","三","四","五","六"][d.getDay()];
 }
 
-/* 日期下拉（带星期） */
-function getDateOptions(selected){
-  let html="";
-  let today=new Date();
-
-  for(let i=0;i<60;i++){
-    let d=new Date();
-    d.setDate(today.getDate()-i);
-
-    let y=d.getFullYear();
-    let m=String(d.getMonth()+1).padStart(2,'0');
-    let day=String(d.getDate()).padStart(2,'0');
-
-    let str=`${y}-${m}-${day}`;
-    let text=`${str}（周${getWeekday(d)}）`;
-
-    html+=`<option value="${str}" ${str===selected?"selected":""}>${text}</option>`;
-  }
-  return html;
-}
-
 function addRow(){
   let prev = rows.length ? Number(rows[rows.length-1].final) : 0;
-  let d=new Date();
-  let str=d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,'0')+"-"+String(d.getDate()).padStart(2,'0');
 
   rows.push({
-    date:str,
+    date:"",
     estimate:"",
     actual:"",
     holding:prev,
@@ -192,14 +171,21 @@ function addRow(){
   save();
 }
 
-function deleteRow(i){
-  rows.splice(i,1);
-  save();
-}
-
 function updateRow(i,key,val){
   rows[i][key]=val;
   save();
+}
+
+function updateDate(i,val){
+  rows[i].date=val;
+  save();
+}
+
+function deleteRow(i){
+  if(confirm("确定删除吗？")){
+    rows.splice(i,1);
+    save();
+  }
 }
 
 function calculate(){
@@ -297,17 +283,22 @@ function render(){
 
     tr.innerHTML=`
 <td>${i+1}</td>
+
 <td>
-<select onchange="updateRow(${i},'date',this.value)">
-${getDateOptions(r.date)}
-</select>
+<input type="date" value="${r.date}" onchange="updateDate(${i},this.value)">
+<div class="week">${r.date ? "周"+getWeekday(new Date(r.date)) : ""}</div>
 </td>
+
 <td><input value="${r.estimate}" onchange="updateRow(${i},'estimate',this.value)"></td>
 <td><input value="${r.actual}" onchange="updateRow(${i},'actual',this.value)"></td>
+
 <td>${Number(r.holding).toFixed(0)}</td>
 <td>${Number(r.profit).toFixed(2)}</td>
+
 <td><input value="${r.action}" onchange="updateRow(${i},'action',this.value)"></td>
+
 <td>${Number(r.final).toFixed(0)}</td>
+
 <td><button class="delBtn" onclick="deleteRow(${i})">删</button></td>
 `;
 
