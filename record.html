@@ -3,9 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
 <title>基金实时估算</title>
-
 <style>
 body {
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI";
@@ -144,7 +142,6 @@ h2 {
 
 </style>
 </head>
-
 <body>
 
 <h2>基金实时估算</h2>
@@ -247,8 +244,8 @@ function addTab() {
   document.getElementById('tab-container').appendChild(tabButton);
   document.getElementById('tab-container').appendChild(tabContent);
   
-  addRow(tabCounter);
-  setActiveTab(tabCounter);
+  addRow(tabCounter);  // Ensuring stock row is added for this tab
+  setActiveTab(tabCounter);  // Automatically activate the new tab
 }
 
 function setActiveTab(tabId) {
@@ -286,7 +283,7 @@ function addRow(tabId, code = "", weight = 10) {
 }
 
 function init() {
-  addTab();
+  addTab();  // Adding the first tab automatically
 }
 
 init();
