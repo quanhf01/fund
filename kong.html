@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>组合净值系统</title>
+<title>组合系统（净值版）</title>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
@@ -13,31 +13,38 @@ body{
   margin:0;
   font-family:-apple-system;
   background:#f5f6f8;
+  height:100vh;
   display:flex;
   flex-direction:column;
-  height:100vh;
 }
 
+/* 顶部 */
 #topBar{
   background:#111;
   color:#fff;
   text-align:center;
   padding:8px;
 }
-#topBar span{font-size:18px;font-weight:bold;}
+#topBar span{
+  font-size:18px;
+  font-weight:bold;
+}
 
+/* 图表 */
 #chartBox{
   background:#fff;
   padding:6px;
 }
 
+/* 股票 */
 #stockApp{
-  height:25vh;
+  height:28vh;
   overflow:auto;
   background:#fff;
   padding:6px;
 }
 
+/* 资金 */
 #fundApp{
   flex:1;
   overflow:auto;
@@ -69,14 +76,14 @@ input{width:100%;font-size:10px;text-align:center;}
 table{width:100%;background:#fff;border-collapse:collapse;}
 th,td{font-size:10px;text-align:center;padding:2px;}
 
-.delBtn{background:#ff4d4f;color:#fff;border:none;}
+.delBtn{background:#ff4d4f;color:#fff;border:none;border-radius:4px;}
 </style>
 </head>
 
 <body>
 
 <div id="topBar">
-  净值收益：<span id="total">0%</span>
+  总收益：<span id="total">0%</span>
 </div>
 
 <div id="chartBox">
@@ -93,7 +100,10 @@ th,td{font-size:10px;text-align:center;padding:2px;}
 
 <div id="fundApp">
 
-<button class="add-btn" onclick="addFundRow()">+ 新增</button>
+<div class="btn-row">
+  <button class="add-btn" onclick="addFundRow()">+ 新增</button>
+  <button class="add-btn" onclick="calculateFund()">刷新</button>
+</div>
 
 <table>
 <thead>
@@ -109,7 +119,7 @@ th,td{font-size:10px;text-align:center;padding:2px;}
 
 <script>
 
-/* ===== 股票 ===== */
+/* ===== 股票（完全不动） ===== */
 const cache=new Map();
 
 async function getStock(code){
@@ -144,7 +154,7 @@ function addStockRow(code="",w=10){
   stockList.appendChild(div);
 }
 
-/* ===== 资金 ===== */
+/* ===== 资金（完全保留） ===== */
 let rows=JSON.parse(localStorage.getItem("rows")||"[]");
 
 function save(){
@@ -161,7 +171,7 @@ function addFundRow(){
 function update(i,k,v){rows[i][k]=v;save();}
 
 function del(i){
-  if(confirm("确定删除吗？")){
+  if(confirm("确定删除这一行吗？")){
     rows.splice(i,1);
     save();
   }
@@ -170,12 +180,16 @@ function del(i){
 /* ===== 图表 ===== */
 let chart=new Chart(document.getElementById("chart"),{
   type:"line",
-  data:{labels:[],datasets:[{label:"净值",data:[],fill:false}]},
+  data:{
+    labels:[],
+    datasets:[{label:"净值",data:[],borderWidth:2,fill:false}]
+  }
 });
 
-/* ===== 核心计算（净值） ===== */
+/* ===== 核心：在原逻辑基础上“读数据生成净值” ===== */
 async function calcAll(){
 
+  /* 股票收益（不改逻辑） */
   let cards=[...document.querySelectorAll("#stockList .card")];
 
   let stockImpactArr=await Promise.all(cards.map(async c=>{
@@ -187,37 +201,52 @@ async function calcAll(){
     return d.change*w;
   }));
 
-  let stockDaily=stockImpactArr.reduce((a,b)=>a+b,0);
+  let stockTotal=stockImpactArr.reduce((a,b)=>a+b,0);
 
+  /* 原资金计算 */
+  let totalProfit=0;
   let nav=1;
   let navList=[];
 
   for(let i=0;i<rows.length;i++){
-    let a=parseFloat(rows[i].actual)||0;
-    let e=parseFloat(rows[i].estimate)||0;
-
-    let daily=(a+e+stockDaily)/100;
-
-    nav=nav*(1+daily);
-
-    navList.push(nav);
 
     rows[i].holding=i===0?0:Number(rows[i-1].final);
-    rows[i].final=nav*10000; // 假设1万起
+
+    let h=Number(rows[i].holding)||0;
+    let a=parseFloat(rows[i].actual)||0;
+    let e=parseFloat(rows[i].estimate)||0;
+    let act=Number(rows[i].action)||0;
+
+    let p=h*((a+e)/100);
+
+    rows[i].profit=p.toFixed(2);
+    rows[i].final=h+p+act;
+
+    totalProfit+=p;
+
+    /* ⭐ 新增：从已有结果推导净值 */
+    let dailyPercent = (a+e+stockTotal)/100;
+    nav = nav * (1 + dailyPercent);
+    navList.push(nav);
   }
 
-  chart.data.labels=rows.map((r,i)=>i+1);
-  chart.data.datasets[0].data=navList;
+  /* 更新图表 */
+  chart.data.labels = rows.map((r,i)=>i+1);
+  chart.data.datasets[0].data = navList;
   chart.update();
 
-  let total=(nav-1)*100;
-  document.getElementById("total").innerText=total.toFixed(2)+"%";
-  document.getElementById("total").style.color=total>=0?"#e53935":"#2e7d32";
+  /* 总收益 */
+  let fundTotal=rows.at(-1)?.final||0;
+  let fundPercent=fundTotal? (totalProfit/fundTotal)*100 : 0;
+
+  let finalTotal=stockTotal+fundPercent;
+
+  document.getElementById("total").innerText=finalTotal.toFixed(3)+"%";
+  document.getElementById("total").style.color=finalTotal>=0?"#e53935":"#2e7d32";
 
   save();
 }
 
-/* 渲染 */
 function render(){
   let tb=document.getElementById("tbody");
   tb.innerHTML="";
