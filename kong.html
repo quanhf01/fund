@@ -41,13 +41,13 @@ button { margin: 5px; }
 
 <body>
 
-<!-- ===== 上：预估 ===== -->
+<!-- 上：预估 -->
 <div id="top">
   <h3>预估</h3>
   <div id="estimate"></div>
 </div>
 
-<!-- ===== 下：操作 ===== -->
+<!-- 下：操作 -->
 <div id="bottom">
 
   <h3>列表管理</h3>
@@ -70,7 +70,7 @@ button { margin: 5px; }
 
 <script>
 
-/* ===== 数据（KONG表）===== */
+/* ===== KONG数据表 ===== */
 let data = JSON.parse(localStorage.getItem("KONG")) || {
   lists: {},
   current: null,
@@ -162,6 +162,7 @@ function render() {
   /* 预估 */
   let total = data.records.reduce((sum, r) => sum + Number(r.price), 0);
   document.getElementById("estimate").innerText = "总投入：" + total;
+
 }
 
 render();
