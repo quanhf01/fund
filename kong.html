@@ -15,12 +15,17 @@ iframe {
 
 <button onclick="showPage('index.html')">列表页面</button>
 <button onclick="showPage('record.html')">记录页面</button>
+<button onclick="goBack()">返回</button>
 
 <iframe id="frame" src="index.html"></iframe>
 
 <script>
 function showPage(page) {
   document.getElementById("frame").src = page;
+}
+
+function goBack() {
+  document.getElementById("frame").src = "index.html";
 }
 </script>
 
