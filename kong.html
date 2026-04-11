@@ -3,239 +3,41 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-<title>合并系统</title>
+<title>合并</title>
 
 <style>
-body{
+html, body{
   margin:0;
-  font-family:-apple-system;
-  background:#f5f6f8;
+  height:100%;
 }
 
-/* 上：基金预估 */
 #top{
   height:45vh;
   overflow:hidden;
-  background:#fff;
 }
 
-/* 下：记录 */
 #bottom{
   height:55vh;
-  overflow-y:auto;
-}
-
-/* ===== 基金样式（原样保留） ===== */
-.container{ padding:6px; }
-
-.summary{
-  display:flex;
-  background:#fff;
-  border-radius:8px;
-  padding:12px 6px;
-  margin-bottom:6px;
-}
-.summary div{ flex:1;text-align:center; }
-.summary span{ font-size:22px;font-weight:bold; }
-
-.btn-row{ display:flex;gap:6px; }
-.btn-row button{
-  flex:1;
-  background:#4CAF50;
-  color:#fff;
-  border:none;
-  padding:10px;
-  border-radius:6px;
-}
-
-table{
-  width:100%;
-  background:#fff;
-  table-layout:fixed;
-  border-collapse:collapse;
-}
-
-th,td{
-  text-align:center;
-  padding:2px;
-  white-space:nowrap;
-}
-
-input{
-  width:100%;
-  text-align:center;
-  font-size:12px;
-}
-
-.delBtn{
-  background:#ff4d4f;
-  color:#fff;
-  border:none;
-}
-
-/* ===== 记录样式 ===== */
-.record-item{
-  background:#fff;
-  margin:6px;
-  padding:6px;
-  border-radius:6px;
+  overflow:auto;
 }
 </style>
 </head>
 
 <body>
 
-<!-- ================= 上：基金预估 ================= -->
 <div id="top">
 
-<div class="container">
-
-<h2>基金实时估算</h2>
-
-<button class="add-btn" onclick="addRow()">➕ 添加股票</button>
-
-<div class="summary">
-  <div>总收益 <span id="total">0%</span></div>
-</div>
-
-<table>
-<thead>
-<tr>
-<th>股票</th>
-<th>占比</th>
-<th>涨跌</th>
-<th>影响</th>
-<th>操作</th>
-</tr>
-</thead>
-
-<tbody id="list"></tbody>
-</table>
+<!-- ======================= 这里：完整粘贴你的第一个文件（100%原样，不动一行） ======================= -->
+<!-- index.html 的 body 内容原封不动粘贴在这里 -->
 
 </div>
 
-</div>
-
-<!-- ================= 下：记录 ================= -->
 <div id="bottom">
 
-<h3 style="padding:6px;">记录</h3>
-
-<button onclick="addRecord()">➕ 添加记录</button>
-
-<div id="records"></div>
+<!-- ======================= 这里：完整粘贴你的第二个文件（100%原样，不动一行） ======================= -->
+<!-- record.html 的 body 内容原封不动粘贴在这里 -->
 
 </div>
-
-<script>
-
-/* ================= 上：基金逻辑（原封不动） ================= */
-
-async function getStockData(code){
-  try{
-    let res=await fetch(`https://qt.gtimg.cn/q=${code}`);
-    let buffer=await res.arrayBuffer();
-    let text=new TextDecoder("gbk").decode(buffer);
-    let data=text.split("~");
-
-    let price=parseFloat(data[3]);
-    let y=parseFloat(data[4]);
-    let change=((price-y)/y)*100;
-
-    return {name:data[1],change};
-  }catch{
-    return {name:"-",change:0};
-  }
-}
-
-function addRow(){
-  let tr=document.createElement("tr");
-
-  tr.innerHTML=`
-    <td><input class="code"></td>
-    <td><input class="weight" value="10"></td>
-    <td class="change">-</td>
-    <td class="impact">-</td>
-    <td><button onclick="this.parentNode.parentNode.remove()">删</button></td>
-  `;
-
-  document.getElementById("list").appendChild(tr);
-}
-
-async function calculate(){
-
-  let rows=document.querySelectorAll("#list tr");
-  let total=0;
-
-  for(let r of rows){
-
-    let code=r.querySelector(".code").value;
-    let w=Number(r.querySelector(".weight").value)/100;
-
-    if(!code) continue;
-
-    let d=await getStockData(code);
-
-    let change=d.change;
-    let impact=change*w;
-
-    r.querySelector(".change").innerText=change.toFixed(2)+"%";
-    r.querySelector(".impact").innerText=impact.toFixed(2)+"%";
-
-    total+=impact;
-  }
-
-  document.getElementById("total").innerText=total.toFixed(2)+"%";
-}
-
-setInterval(calculate,5000);
-
-
-/* ================= 下：记录逻辑（原封不动） ================= */
-
-let records=JSON.parse(localStorage.getItem("records")||"[]");
-
-function addRecord(){
-
-  let stock=prompt("股票");
-  let price=prompt("价格");
-
-  if(!stock||!price) return;
-
-  records.push({
-    stock,
-    price,
-    time:new Date().toLocaleString()
-  });
-
-  localStorage.setItem("records",JSON.stringify(records));
-  render();
-}
-
-function render(){
-
-  let box=document.getElementById("records");
-  box.innerHTML="";
-
-  records.forEach(r=>{
-
-    let div=document.createElement("div");
-    div.className="record-item";
-
-    div.innerHTML=`
-      <div>${r.time}</div>
-      <div>${r.stock} - ${r.price}</div>
-    `;
-
-    box.appendChild(div);
-  });
-
-}
-
-render();
-
-</script>
 
 </body>
 </html>
