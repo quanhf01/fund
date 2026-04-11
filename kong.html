@@ -4,29 +4,165 @@
 <meta charset="UTF-8">
 <title>KONG</title>
 <style>
-iframe {
-  width: 100%;
-  height: 90vh;
-  border: none;
+body {
+  margin: 0;
+  font-family: Arial;
+}
+
+/* 上半部分：预估 */
+#top {
+  height: 40vh;
+  border-bottom: 2px solid #ccc;
+  padding: 10px;
+  overflow-y: auto;
+}
+
+/* 下半部分：操作 */
+#bottom {
+  height: 60vh;
+  padding: 10px;
+  overflow-y: auto;
+}
+
+button {
+  margin: 5px;
+}
+
+/* 区块 */
+.box {
+  border: 1px solid #ccc;
+  margin-top: 10px;
+  padding: 10px;
 }
 </style>
 </head>
+
 <body>
 
-<button onclick="showPage('index.html')">列表页面</button>
-<button onclick="showPage('record.html')">记录页面</button>
-<button onclick="goBack()">返回</button>
+<!-- 上：预估 -->
+<div id="top">
+  <h3>预估</h3>
+  <div id="estimate"></div>
+</div>
 
-<iframe id="frame" src="index.html"></iframe>
+<!-- 下：操作 -->
+<div id="bottom">
+
+  <h3>列表管理</h3>
+  <button onclick="addList()">添加列表</button>
+  <div id="lists"></div>
+
+  <div class="box">
+    <h4>当前列表：<span id="current"></span></h4>
+    <button onclick="addStock()">添加股票</button>
+    <div id="stocks"></div>
+  </div>
+
+  <div class="box">
+    <h3>记录</h3>
+    <button onclick="addRecord()">添加记录</button>
+    <div id="records"></div>
+  </div>
+
+</div>
 
 <script>
-function showPage(page) {
-  document.getElementById("frame").src = page;
+let data = JSON.parse(localStorage.getItem("KONG")) || {
+  lists: {},
+  current: null,
+  records: []
+};
+
+function save() {
+  localStorage.setItem("KONG", JSON.stringify(data));
 }
 
-function goBack() {
-  document.getElementById("frame").src = "index.html";
+/* 列表 */
+function addList() {
+  const name = prompt("列表名");
+  if (!name) return;
+  data.lists[name] = [];
+  data.current = name;
+  save();
+  render();
 }
+
+function switchList(name) {
+  data.current = name;
+  save();
+  render();
+}
+
+/* 股票 */
+function addStock() {
+  if (!data.current) return alert("先选列表");
+  const stock = prompt("股票");
+  if (!stock) return;
+  data.lists[data.current].push(stock);
+  save();
+  render();
+}
+
+/* 记录 */
+function addRecord() {
+  const stock = prompt("股票");
+  const price = prompt("价格");
+  if (!stock || !price) return;
+
+  data.records.push({
+    stock,
+    price,
+    date: new Date().toLocaleString()
+  });
+
+  save();
+  render();
+}
+
+/* 渲染 */
+function render() {
+  const listsDiv = document.getElementById("lists");
+  const stocksDiv = document.getElementById("stocks");
+  const recordsDiv = document.getElementById("records");
+  const estimateDiv = document.getElementById("estimate");
+
+  listsDiv.innerHTML = "";
+  stocksDiv.innerHTML = "";
+  recordsDiv.innerHTML = "";
+  estimateDiv.innerHTML = "";
+
+  document.getElementById("current").innerText = data.current || "无";
+
+  /* 列表 */
+  for (let name in data.lists) {
+    const btn = document.createElement("button");
+    btn.innerText = name;
+    btn.onclick = () => switchList(name);
+    listsDiv.appendChild(btn);
+  }
+
+  /* 股票 */
+  if (data.current) {
+    data.lists[data.current].forEach(s => {
+      const div = document.createElement("div");
+      div.innerText = s;
+      stocksDiv.appendChild(div);
+    });
+  }
+
+  /* 记录 */
+  data.records.forEach(r => {
+    const div = document.createElement("div");
+    div.innerText = r.date + " - " + r.stock + " - " + r.price;
+    recordsDiv.appendChild(div);
+  });
+
+  /* 预估（简单汇总） */
+  let total = data.records.reduce((sum, r) => sum + Number(r.price), 0);
+  estimateDiv.innerText = "总投入：" + total;
+}
+
+render();
 </script>
 
 </body>
