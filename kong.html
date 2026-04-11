@@ -16,36 +16,32 @@ body{
   flex-direction:column;
 }
 
-/* ================= 顶部总收益 ================= */
+/* 顶部收益 */
 #topBar{
   background:#111;
   color:#fff;
   text-align:center;
   padding:8px;
-  font-size:14px;
 }
-
 #topBar span{
   font-size:18px;
   font-weight:bold;
-  margin-left:6px;
 }
 
-/* ================= 上半股票（1/3 + 滚动） ================= */
+/* 股票区 */
 #stockApp{
   height:33vh;
   overflow:auto;
   background:#fff;
-  border-bottom:1px solid #eee;
   padding:6px;
 }
-
-#stockApp h2{
-  text-align:center;
-  margin:4px 0;
-  font-size:14px;
+.header,.card{
+  display:grid;
+  grid-template-columns:2fr 1fr 1fr 1fr auto;
+  gap:4px;
+  font-size:11px;
+  align-items:center;
 }
-
 .add-btn{
   width:100%;
   background:#4CAF50;
@@ -54,85 +50,29 @@ body{
   padding:6px;
   border-radius:6px;
   margin-bottom:6px;
-  font-size:12px;
 }
+.stock-box{display:flex;flex-direction:column;}
+.name{font-size:12px;font-weight:bold;}
+.codeInput{font-size:10px;border:none;border-bottom:1px solid #ddd;}
+.weight{width:55px;text-align:center;border:none;background:#f0f2f5;border-radius:20px;}
+.red{color:#e53935;}
+.green{color:#2e7d32;}
+.delete-btn{background:#ff4d4f;color:#fff;border:none;border-radius:4px;font-size:10px;}
 
-.header,.card{
-  display:grid;
-  grid-template-columns:2fr 1fr 1fr 1fr auto;
-  gap:4px;
-  font-size:11px;
-  align-items:center;
-}
-
-.card{
-  padding:4px 0;
-}
-
-.stock-box{
-  display:flex;
-  flex-direction:column;
-}
-
-.name{ font-size:12px;font-weight:bold; }
-
-.codeInput{
-  font-size:10px;
-  border:none;
-  border-bottom:1px solid #ddd;
-}
-
-.weight{
-  width:55px;
-  text-align:center;
-  border:none;
-  background:#f0f2f5;
-  border-radius:20px;
-  font-size:11px;
-}
-
-.change{ font-size:11px; }
-
-.red{ color:#e53935; }
-.green{ color:#2e7d32; }
-
-.delete-btn{
-  background:#ff4d4f;
-  color:#fff;
-  border:none;
-  border-radius:4px;
-  font-size:10px;
-}
-
-/* ================= 下半资金 ================= */
-#fundApp{
-  flex:1;
-  overflow:auto;
-  padding:6px;
-}
+/* 资金区 */
+#fundApp{flex:1;overflow:auto;padding:6px;}
 
 .summary{
   display:flex;
   background:#fff;
-  border-radius:8px;
   padding:8px;
-  margin-bottom:6px;
-  text-align:center;
-}
-
-.summary div{ flex:1; }
-
-.summary span{
-  font-size:16px;
-  font-weight:bold;
-}
-
-.btn-row{
-  display:flex;
-  gap:6px;
+  border-radius:8px;
   margin-bottom:6px;
 }
+.summary div{flex:1;text-align:center;}
+.summary span{font-size:16px;font-weight:bold;}
 
+.btn-row{display:flex;gap:6px;margin-bottom:6px;}
 .btn-row button{
   flex:1;
   background:#4CAF50;
@@ -140,116 +80,59 @@ body{
   border:none;
   padding:6px;
   border-radius:6px;
-  font-size:12px;
 }
 
-table{
-  width:100%;
-  background:#fff;
-  border-collapse:collapse;
-  table-layout:fixed;
-}
-
-th,td{
-  font-size:10px;
-  text-align:center;
-  padding:2px;
-}
-
-input{
-  width:100%;
-  font-size:10px;
-  text-align:center;
-}
-
-.delBtn{
-  background:#ff4d4f;
-  color:#fff;
-  border:none;
-  font-size:10px;
-  border-radius:4px;
-}
-
-/* 解锁 */
-.unlockBox{
-  background:#fff;
-  margin-top:6px;
-  padding:6px;
-  border-radius:6px;
-  font-size:11px;
-}
-
-.unlockGrid{
-  display:grid;
-  grid-template-columns:repeat(4,1fr);
-  gap:4px;
-}
-
-/* 防溢出 */
-*{box-sizing:border-box;}
-
+table{width:100%;background:#fff;border-collapse:collapse;}
+th,td{font-size:10px;text-align:center;padding:2px;}
+input{width:100%;font-size:10px;text-align:center;}
+.delBtn{background:#ff4d4f;color:#fff;border:none;border-radius:4px;}
 </style>
 </head>
 
 <body>
 
-<!-- ================= 顶部预估 ================= -->
 <div id="topBar">
-  组合预估收益：
-  <span id="total">0%</span>
+  总收益：<span id="total">0%</span>
 </div>
 
-<!-- ================= 股票模块 ================= -->
 <div id="stockApp">
-
-  <h2>股票实时估算</h2>
-  <button class="add-btn" onclick="addStockRow()">+ 添加股票</button>
+  <button class="add-btn" onclick="addStockRow()">+ 股票</button>
 
   <div class="header">
-    <div>股票</div>
-    <div>占比</div>
-    <div>涨跌</div>
-    <div>影响</div>
-    <div></div>
+    <div>股票</div><div>占比</div><div>涨跌</div><div>影响</div><div></div>
   </div>
 
   <div id="stockList"></div>
 </div>
 
-<!-- ================= 资金模块 ================= -->
 <div id="fundApp">
 
-  <div class="summary">
-    <div>持仓<br><span id="sumHolding">0</span></div>
-    <div>收益<br><span id="sumProfit">0</span></div>
-    <div>T+<input id="tDays" value="3" style="width:40px"><br><span id="sumT">0</span></div>
-  </div>
+<div class="summary">
+  <div>持仓<br><span id="sumHolding">0</span></div>
+  <div>收益<br><span id="sumProfit">0</span></div>
+  <div>T+<input id="tDays" value="3" style="width:40px"><br><span id="sumT">0</span></div>
+</div>
 
-  <div class="btn-row">
-    <button onclick="addFundRow()">+ 新增</button>
-    <button onclick="calculateFund()">刷新</button>
-  </div>
+<div class="btn-row">
+  <button onclick="addFundRow()">+ 新增</button>
+  <button onclick="calculateFund()">刷新</button>
+</div>
 
-  <table>
-    <thead>
-      <tr>
-        <th>#</th><th>日期</th><th>预估</th><th>实际</th>
-        <th>持仓</th><th>收益</th><th>操作</th><th>最终</th><th>删</th>
-      </tr>
-    </thead>
-    <tbody id="tbody"></tbody>
-  </table>
-
-  <div class="unlockBox">
-    <div>解锁资金：</div>
-    <div class="unlockGrid" id="unlockBox"></div>
-  </div>
+<table>
+<thead>
+<tr>
+<th>#</th><th>日期</th><th>预估</th><th>实际</th>
+<th>持仓</th><th>收益</th><th>操作</th><th>最终</th><th>删</th>
+</tr>
+</thead>
+<tbody id="tbody"></tbody>
+</table>
 
 </div>
 
 <script>
 
-/* ========== 股票模块 ========== */
+/* ===== 股票 ===== */
 const cache=new Map();
 
 async function getStock(code){
@@ -278,27 +161,50 @@ function addStockRow(code="",w=10){
       <div class="name">--</div>
       <input class="codeInput" value="${code}">
     </div>
-
     <input class="weight" value="${w}">
     <div class="change">-</div>
     <div class="impact">-</div>
-
     <button class="delete-btn" onclick="this.parentNode.remove()">删</button>
   `;
 
-  document.getElementById("stockList").appendChild(div);
+  stockList.appendChild(div);
 }
 
-async function calcStock(){
+/* ===== 资金 ===== */
+let rows=JSON.parse(localStorage.getItem("rows")||"[]");
+
+function save(){
+  localStorage.setItem("rows",JSON.stringify(rows));
+  render();
+}
+
+function addFundRow(){
+  let prev=rows.length?Number(rows.at(-1).final):0;
+  rows.push({date:"",estimate:"",actual:"",holding:prev,profit:0,action:0,final:prev});
+  save();
+}
+
+function update(i,k,v){rows[i][k]=v;save();}
+
+function del(i){
+  if(confirm("确定删除这一行吗？")){
+    rows.splice(i,1);
+    save();
+  }
+}
+
+/* ===== 核心：统一收益计算 ===== */
+async function calcAll(){
+
+  /* 股票 */
   let cards=[...document.querySelectorAll("#stockList .card")];
 
-  let tasks=cards.map(async c=>{
+  let stockTasks=cards.map(async c=>{
     let code=c.querySelector(".codeInput").value.trim();
     let w=parseFloat(c.querySelector(".weight").value)/100;
     if(!code) return 0;
 
     let d=await getStock(code);
-
     let impact=d.change*w;
 
     c.querySelector(".name").innerText=d.name;
@@ -314,69 +220,40 @@ async function calcStock(){
     return impact;
   });
 
-  let r=await Promise.all(tasks);
-  let total=r.reduce((a,b)=>a+b,0);
+  let stockResult=await Promise.all(stockTasks);
+  let stockTotal=stockResult.reduce((a,b)=>a+b,0);
 
-  document.getElementById("total").innerText=total.toFixed(3)+"%";
-  document.getElementById("total").style.color=total>=0?"#e53935":"#2e7d32";
-}
-
-setInterval(calcStock,5000);
-
-addStockRow("sh600900",4.7);
-addStockRow("sh601668",4.4);
-
-
-/* ========== 资金模块（已修复删除确认） ========== */
-let rows=JSON.parse(localStorage.getItem("rows")||"[]");
-
-function save(){
-  localStorage.setItem("rows",JSON.stringify(rows));
-  render();
-}
-
-function addFundRow(){
-  let prev=rows.length?Number(rows.at(-1).final):0;
-  rows.push({date:"",estimate:"",actual:"",holding:prev,profit:0,action:0,final:prev});
-  save();
-}
-
-function update(i,k,v){
-  rows[i][k]=v;
-  save();
-}
-
-/* ✅ 修复：删除确认已恢复 */
-function del(i){
-  if(confirm("确定删除这一行吗？")){
-    rows.splice(i,1);
-    save();
-  }
-}
-
-function calculateFund(){
-
-  let total=0;
+  /* 资金 */
+  let totalProfit=0;
 
   for(let i=0;i<rows.length;i++){
     rows[i].holding=i===0?0:Number(rows[i-1].final);
 
     let h=Number(rows[i].holding)||0;
     let a=parseFloat(rows[i].actual)||0;
+    let e=parseFloat(rows[i].estimate)||0;
     let act=Number(rows[i].action)||0;
 
-    let p=h*(a/100);
+    let p=h*((a+e)/100);
 
     rows[i].profit=p.toFixed(2);
     rows[i].final=h+p+act;
 
-    total+=p;
+    totalProfit+=p;
   }
 
-  document.getElementById("sumHolding").innerText=rows.at(-1)?.final||0;
-  document.getElementById("sumProfit").innerText=total.toFixed(2);
+  let fundTotal=rows.at(-1)?.final||0;
+  let fundPercent=fundTotal? (totalProfit/fundTotal)*100 : 0;
 
-  render();
+  /* 合并 */
+  let finalTotal=stockTotal+fundPercent;
+
+  document.getElementById("total").innerText=finalTotal.toFixed(3)+"%";
+  document.getElementById("total").style.color=finalTotal>=0?"#e53935":"#2e7d32";
+
+  document.getElementById("sumHolding").innerText=fundTotal;
+  document.getElementById("sumProfit").innerText=totalProfit.toFixed(2);
+
   save();
 }
 
@@ -403,7 +280,14 @@ function render(){
   });
 }
 
+/* 自动刷新 */
+setInterval(calcAll,5000);
+
+addStockRow("sh600900",4.7);
+addStockRow("sh601668",4.4);
+
 render();
+calcAll();
 
 </script>
 
