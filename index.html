@@ -1,154 +1,277 @@
-<!DOCTYPE html>
-<html lang="zh">
+<!DOCDOCTYPETYPE html>
+<html>
 <head>
-<meta charset="UTF-8">
-<title>KONG</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="utf-8">
 
 <style>
-html, body {
-  margin: 0;
-  height: 100%;
-  font-family: Arial;
+body{
+  margin:0;
+  font-family:-apple-system;
+  background:#f5f6f8;
+  font-size:12px;
+}
+.container{ padding:6px; }
+
+.summary{
+  display:flex;
+  background:#fff;
+  border-radius:8px;
+  padding:12px 6px;
+  margin-bottom:6px;
+}
+.summary div{ flex:1;text-align:center; }
+.summary span{ font-size:22px;font-weight:bold; }
+
+.btn-row{ display:flex;gap:6px; }
+.btn-row button{
+  flex:1;
+  background:#4CAF50;
+  color:#fff;
+  border:none;
+  padding:10px;
+  border-radius:6px;
 }
 
-#top {
-  height: 40vh;
-  overflow: hidden;
-  border-bottom: 1px solid #ccc;
-  padding: 10px;
-  box-sizing: border-box;
+table{
+  width:100%;
+  background:#fff;
+  table-layout:fixed;
+  border-collapse:collapse;
 }
 
-#bottom {
-  height: 60vh;
-  overflow-y: auto;
-  padding: 10px;
-  box-sizing: border-box;
+/* ✅ 调整列宽（重点修复日期） */
+th:nth-child(1),td:nth-child(1){width:6%;}
+th:nth-child(2),td:nth-child(2){width:28%;} /* 日期加宽 */
+th:nth-child(3),td:nth-child(3){width:9%;}
+th:nth-child(4),td:nth-child(4){width:9%;}
+th:nth-child(5),td:nth-child(5){width:10%;}
+th:nth-child(6),td:nth-child(6){width:10%;}
+th:nth-child(7),td:nth-child(7){width:10%;}
+th:nth-child(8),td:nth-child(8){width:10%;}
+th:nth-child(9),td:nth-child(9){width:8%;}
+
+th,td{
+  text-align:center;
+  padding:2px;
+  white-space:nowrap;
+}
+th{ background:#eee; }
+
+input{
+  width:100%;
+  text-align:center;
+  font-size:12px;
+  box-sizing:border-box;
 }
 
-button { margin: 5px; }
+/* ✅ 日期输入不截断 */
+.dateInput{
+  font-size:12px;
+  width:100%;
+}
 
-.box {
-  border: 1px solid #ccc;
-  padding: 8px;
-  margin-top: 10px;
+.week{
+  font-size:10px;
+  color:#888;
+}
+
+.delBtn{
+  background:#ff4d4f;
+  color:#fff;
+  border:none;
+  border-radius:4px;
+}
+
+/* ✅ 四列布局 */
+.unlockBox{
+  background:#fff;
+  margin-top:6px;
+  padding:6px;
+  border-radius:6px;
+}
+
+.unlockGrid{
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:4px;
+  font-size:11px;
 }
 </style>
-
 </head>
 
 <body>
 
-<div id="top">
-  <h3>预估</h3>
-  <div id="estimate"></div>
+<div class="container">
+
+<div class="summary">
+  <div>持仓<span id="sumHolding">0</span></div>
+  <div>收益<span id="sumProfit">0</span></div>
+  <div>
+    T+<input id="tDays" value="3" style="width:55px;">金额
+    <span id="sumT">0</span>
+  </div>
 </div>
 
-<div id="bottom">
+<div class="btn-row">
+  <button onclick="addRow()">+ 新增一天</button>
+  <button onclick="calculate()">刷新计算</button>
+</div>
 
-  <h3>列表管理</h3>
-  <button onclick="addList()">添加列表</button>
-  <div id="lists"></div>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>日期</th>
+<th>预估%</th>
+<th>实际%</th>
+<th>持仓</th>
+<th>收益</th>
+<th>操作</th>
+<th>最终</th>
+<th>删</th>
+</tr>
+</thead>
+<tbody id="tbody"></tbody>
+</table>
 
-  <div class="box">
-    <h4>当前列表：<span id="current"></span></h4>
-    <button onclick="addStock()">添加股票</button>
-    <div id="stocks"></div>
-  </div>
-
-  <div class="box">
-    <h3>记录</h3>
-    <button onclick="addRecord()">添加记录</button>
-    <div id="records"></div>
-  </div>
+<div class="unlockBox">
+  <div>资金解锁明细：</div>
+  <div class="unlockGrid" id="unlockBox"></div>
+</div>
 
 </div>
 
 <script>
 
-let data = JSON.parse(localStorage.getItem("KONG")) || {
-  lists: {},
-  current: null,
-  records: []
-};
+let rows = JSON.parse(localStorage.getItem("rows") || "[]");
 
-function save() {
-  localStorage.setItem("KONG", JSON.stringify(data));
+function getWeekday(d){
+  return ["日","一","二","三","四","五","六"][d.getDay()];
 }
 
-function addList() {
-  const name = prompt("列表名");
-  if (!name) return;
-
-  data.lists[name] = [];
-  data.current = name;
+function addRow(){
+  let prev = rows.length ? Number(rows[rows.length-1].final) : 0;
+  rows.push({date:"",estimate:"",actual:"",holding:prev,profit:0,action:0,final:prev});
   save();
-  render();
 }
 
-function switchList(name) {
-  data.current = name;
-  save();
-  render();
+function updateRow(i,key,val){ rows[i][key]=val; save(); }
+function updateDate(i,val){ rows[i].date=val; save(); }
+
+function deleteRow(i){
+  if(confirm("确定删除吗？")){
+    rows.splice(i,1);
+    save();
+  }
 }
 
-function addStock() {
-  if (!data.current) return alert("先选列表");
+function calculate(){
 
-  const stock = prompt("股票");
-  if (!stock) return;
+  let totalProfit=0;
 
-  data.lists[data.current].push(stock);
-  save();
-  render();
-}
+  for(let i=0;i<rows.length;i++){
+    rows[i].holding = i===0 ? 0 : Number(rows[i-1].final);
 
-function addRecord() {
-  const stock = prompt("股票");
-  const price = prompt("价格");
-  if (!stock || !price) return;
+    let h=Number(rows[i].holding)||0;
+    let a=parseFloat(rows[i].actual)||0;
+    let act=Number(rows[i].action)||0;
 
-  data.records.push({
-    stock,
-    price,
-    date: new Date().toLocaleString()
-  });
+    let profit=h*(a/100);
 
-  save();
-  render();
-}
+    rows[i].profit=profit.toFixed(2);
+    rows[i].final=(h+profit+act).toFixed(0);
 
-function render() {
-
-  lists.innerHTML = "";
-  stocks.innerHTML = "";
-  records.innerHTML = "";
-
-  document.getElementById("current").innerText = data.current || "无";
-
-  for (let name in data.lists) {
-    const btn = document.createElement("button");
-    btn.innerText = name;
-    btn.onclick = () => switchList(name);
-    lists.appendChild(btn);
+    totalProfit+=profit;
   }
 
-  if (data.current) {
-    data.lists[data.current].forEach(s => {
-      const div = document.createElement("div");
-      div.innerText = s;
-      stocks.appendChild(div);
-    });
-  }
+  let tDays=Number(document.getElementById("tDays").value)||3;
+  let queue=[];
+  let now=new Date();
 
-  data.records.forEach(r => {
-    const div = document.createElement("div");
-    div.innerText = `${r.date} - ${r.stock} - ${r.price}`;
-    records.appendChild(div);
+  rows.forEach(r=>{
+    let act=Number(r.action)||0;
+    let d=new Date(r.date);
+
+    if(act>0){ queue.push({amount:act,date:d}); }
+
+    if(act<0){
+      let need=Math.abs(act);
+      for(let q of queue){
+        let diff=(d-q.date)/(1000*60*60*24);
+        if(diff<tDays) continue;
+        let use=Math.min(q.amount,need);
+        q.amount-=use;
+        need-=use;
+        if(need===0) break;
+      }
+    }
   });
 
-  let total = data.records.reduce((sum, r) => sum + Number(r.price), 0);
-  document.getElementById("estimate").innerText = "总投入：" + total;
+  let tAmount=0;
+  let html="";
+
+  queue.forEach(q=>{
+    if(q.amount<=0) return;
+
+    let diff=(now-q.date)/(1000*60*60*24);
+
+    if(diff>=tDays){
+      tAmount+=q.amount;
+      html+=`<div>${q.amount}(可用)</div>`;
+    }else{
+      let left=Math.ceil(tDays-diff);
+      html+=`<div>${q.amount}(剩${left}天)</div>`;
+    }
+  });
+
+  let last=rows[rows.length-1]||{};
+
+  document.getElementById("sumHolding").innerText=last.final||0;
+  document.getElementById("sumProfit").innerText=totalProfit.toFixed(2);
+  document.getElementById("sumT").innerText=tAmount;
+  document.getElementById("unlockBox").innerHTML=html;
+
+  save();
+}
+
+function save(){
+  localStorage.setItem("rows",JSON.stringify(rows));
+  render();
+}
+
+function render(){
+
+  let tb=document.getElementById("tbody");
+  tb.innerHTML="";
+
+  rows.forEach((r,i)=>{
+
+    let tr=document.createElement("tr");
+
+    tr.innerHTML=`
+<td>${i+1}</td>
+
+<td>
+<input type="date" class="dateInput" value="${r.date}" onchange="updateDate(${i},this.value)">
+<div class="week">${r.date ? "周"+getWeekday(new Date(r.date)) : ""}</div>
+</td>
+
+<td><input value="${r.estimate}" onchange="updateRow(${i},'estimate',this.value)"></td>
+<td><input value="${r.actual}" onchange="updateRow(${i},'actual',this.value)"></td>
+
+<td>${Number(r.holding).toFixed(0)}</td>
+<td>${Number(r.profit).toFixed(2)}</td>
+
+<td><input value="${r.action}" onchange="updateRow(${i},'action',this.value)"></td>
+
+<td>${Number(r.final).toFixed(0)}</td>
+
+<td><button class="delBtn" onclick="deleteRow(${i})">删</button></td>
+`;
+
+    tb.appendChild(tr);
+  });
 
 }
 
