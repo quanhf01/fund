@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>组合页面</title>
+<title>合并页面</title>
 
 <style>
 body{
@@ -13,69 +13,94 @@ body{
   background:#f5f6f8;
 }
 
-/* ===== 上半部分：预估 ===== */
+/* 上半部分 */
 #top{
-  height:40vh;
+  height:45vh;
   overflow:hidden;
   border-bottom:1px solid #ddd;
-  background:#fff;
 }
 
-/* ===== 下半部分：记录（可滚动） ===== */
+/* 下半部分 */
 #bottom{
-  height:60vh;
+  height:55vh;
   overflow-y:auto;
-  padding:8px;
-}
-
-/* 通用 */
-h2,h3{ margin:6px 0; }
-
-/* 防止两个系统互相影响 */
-.section{
-  padding:8px;
 }
 </style>
 </head>
 
 <body>
 
-<!-- ===================== 上：预估系统 ===================== -->
+<!-- ================= 上：基金预估（原样放入） ================= -->
 <div id="top">
-  <div class="section">
 
-    <h3>📊 基金预估</h3>
+<h2>基金实时估算</h2>
 
-    <button onclick="addRow()">➕ 添加股票</button>
+<button class="add-btn" onclick="addRow()">➕ 添加股票</button>
 
-    <div id="list"></div>
+<div class="header">
+  <div>股票</div>
+  <div>占比</div>
+  <div>涨跌</div>
+  <div>影响</div>
+  <div></div>
+</div>
 
-    <div id="total">0%</div>
+<div id="list"></div>
 
+<div id="total">0%</div>
+
+</div>
+
+<!-- ================= 下：记录系统（原样放入） ================= -->
+<div id="bottom">
+
+<div class="container">
+
+<div class="summary">
+  <div>持仓<span id="sumHolding">0</span></div>
+  <div>收益<span id="sumProfit">0</span></div>
+  <div>
+    T+<input id="tDays" value="3" style="width:55px;">金额
+    <span id="sumT">0</span>
   </div>
 </div>
 
-<!-- ===================== 下：记录系统 ===================== -->
-<div id="bottom">
+<div class="btn-row">
+  <button onclick="addRow()">+ 新增一天</button>
+  <button onclick="calculate()">刷新计算</button>
+</div>
 
-  <div class="section">
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>日期</th>
+<th>预估%</th>
+<th>实际%</th>
+<th>持仓</th>
+<th>收益</th>
+<th>操作</th>
+<th>最终</th>
+<th>删</th>
+</tr>
+</thead>
+<tbody id="tbody"></tbody>
+</table>
 
-    <h3>📒 记录表</h3>
+<div class="unlockBox">
+  <div>资金解锁明细：</div>
+  <div class="unlockGrid" id="unlockBox"></div>
+</div>
 
-    <button onclick="addRecord()">➕ 添加记录</button>
-
-    <div id="records"></div>
-
-  </div>
+</div>
 
 </div>
 
 <script>
 
-//////////////////////////////////////////////////////
-// ========== 上半部分：基金预估系统 ==========
-//////////////////////////////////////////////////////
+/* ====== 这里开始：两段JS完全原样保留 ====== */
 
+/* 上半部分基金逻辑 */
 async function getStockData(code){
   try{
     let res = await fetch(`https://qt.gtimg.cn/q=${code}`);
@@ -84,11 +109,11 @@ async function getStockData(code){
     let data = text.split("~");
 
     let price = parseFloat(data[3]);
-    let yest = parseFloat(data[4]);
-
-    let change = ((price - yest)/yest)*100;
+    let yesterday = parseFloat(data[4]);
+    let change = ((price - yesterday)/yesterday)*100;
 
     return {name:data[1], change};
+
   }catch{
     return {name:"-", change:0};
   }
@@ -96,70 +121,50 @@ async function getStockData(code){
 
 function addRow(){
   let div = document.createElement("div");
-
-  div.innerHTML = `
-    <input class="code" placeholder="sh600900">
+  div.innerHTML=`
+    <input class="codeInput">
     <input class="weight" value="10">
     <span class="name">--</span>
     <span class="change">-</span>
     <span class="impact">-</span>
     <button onclick="this.parentNode.remove()">删</button>
   `;
-
   document.getElementById("list").appendChild(div);
 }
 
 async function calculate(){
 
-  let rows = document.querySelectorAll("#list > div");
-  let total = 0;
+  let cards=document.querySelectorAll("#list div");
+  let total=0;
 
-  for(let r of rows){
+  for(let c of cards){
 
-    let code = r.querySelector(".code").value;
-    let weight = Number(r.querySelector(".weight").value)/100;
+    let code=c.querySelector(".codeInput").value;
+    let weight=Number(c.querySelector(".weight").value)/100;
 
     if(!code) continue;
 
-    let d = await getStockData(code);
+    let d=await getStockData(code);
 
-    let change = d.change;
-    let impact = change * weight;
+    let change=d.change;
+    let impact=change*weight;
 
-    r.querySelector(".name").innerText = d.name;
-    r.querySelector(".change").innerText = change.toFixed(2)+"%";
-    r.querySelector(".impact").innerText = impact.toFixed(2)+"%";
+    c.querySelector(".name").innerText=d.name;
+    c.querySelector(".change").innerText=change.toFixed(2)+"%";
+    c.querySelector(".impact").innerText=impact.toFixed(2)+"%";
 
-    total += impact;
+    total+=impact;
   }
 
-  document.getElementById("total").innerText =
-    "总收益：" + total.toFixed(2) + "%";
+  document.getElementById("total").innerText=total.toFixed(2)+"%";
 }
 
-setInterval(calculate, 5000);
+setInterval(calculate,5000);
 
 
-//////////////////////////////////////////////////////
-// ========== 下半部分：记录系统 ==========
-//////////////////////////////////////////////////////
+/* 下半部分记录逻辑（原样保留） */
 
 let rows = JSON.parse(localStorage.getItem("rows")||"[]");
-
-function addRecord(){
-  let stock = prompt("股票");
-  let price = prompt("价格");
-
-  if(!stock||!price) return;
-
-  rows.push({
-    stock,
-    price,
-    time:new Date().toLocaleString()
-  });
-
-  save();
-}
 
 function save(){
   localStorage.setItem("rows",JSON.stringify(rows));
@@ -168,24 +173,26 @@ function save(){
 
 function render(){
 
-  let box = document.getElementById("records");
-  box.innerHTML = "";
+  let tb=document.getElementById("tbody");
+  tb.innerHTML="";
 
-  rows.forEach(r=>{
+  rows.forEach((r,i)=>{
 
-    let div = document.createElement("div");
+    let tr=document.createElement("tr");
 
-    div.style.background="#fff";
-    div.style.margin="6px 0";
-    div.style.padding="6px";
-    div.style.borderRadius="6px";
-
-    div.innerHTML = `
-      <div>${r.time}</div>
-      <div>${r.stock} - ${r.price}</div>
+    tr.innerHTML=`
+    <td>${i+1}</td>
+    <td><input value="${r.date||''}"></td>
+    <td><input value="${r.estimate||''}"></td>
+    <td><input value="${r.actual||''}"></td>
+    <td>${r.holding||0}</td>
+    <td>${r.profit||0}</td>
+    <td><input value="${r.action||''}"></td>
+    <td>${r.final||0}</td>
+    <td><button onclick="rows.splice(${i},1);save()">删</button></td>
     `;
 
-    box.appendChild(div);
+    tb.appendChild(tr);
   });
 
 }
