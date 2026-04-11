@@ -3,70 +3,61 @@
 <head>
 <meta charset="UTF-8">
 <title>KONG</title>
+
 <style>
 body {
   margin: 0;
-  font-family: Arial;
 }
 
-/* 上半部分：预估 */
+/* 上：预估区域 */
 #top {
   height: 40vh;
-  border-bottom: 2px solid #ccc;
-  padding: 10px;
   overflow-y: auto;
+  border-bottom: 1px solid #ccc;
 }
 
-/* 下半部分：操作 */
+/* 下：操作区域（可滚动） */
 #bottom {
   height: 60vh;
-  padding: 10px;
   overflow-y: auto;
 }
-
-button {
-  margin: 5px;
-}
-
-/* 区块 */
-.box {
-  border: 1px solid #ccc;
-  margin-top: 10px;
-  padding: 10px;
-}
 </style>
-</head>
 
+</head>
 <body>
 
-<!-- 上：预估 -->
+<!-- ✅ 上半部分（放你原来的“预估内容”） -->
 <div id="top">
+
+  <!-- 👇 把你原来显示“预估”的那一块代码粘这里 -->
   <h3>预估</h3>
   <div id="estimate"></div>
+
 </div>
 
-<!-- 下：操作 -->
+<!-- ✅ 下半部分（其他全部原样放这里） -->
 <div id="bottom">
+
+  <!-- 👇 把你原来的 index + record 所有内容原封不动粘这里 -->
 
   <h3>列表管理</h3>
   <button onclick="addList()">添加列表</button>
   <div id="lists"></div>
 
-  <div class="box">
-    <h4>当前列表：<span id="current"></span></h4>
-    <button onclick="addStock()">添加股票</button>
-    <div id="stocks"></div>
-  </div>
+  <h4>当前列表：<span id="current"></span></h4>
+  <button onclick="addStock()">添加股票</button>
+  <div id="stocks"></div>
 
-  <div class="box">
-    <h3>记录</h3>
-    <button onclick="addRecord()">添加记录</button>
-    <div id="records"></div>
-  </div>
+  <hr>
+
+  <h3>记录</h3>
+  <button onclick="addRecord()">添加记录</button>
+  <div id="records"></div>
 
 </div>
 
 <script>
+/* ❗这里保留你原来的JS，不用改 */
 let data = JSON.parse(localStorage.getItem("KONG")) || {
   lists: {},
   current: null,
@@ -77,7 +68,6 @@ function save() {
   localStorage.setItem("KONG", JSON.stringify(data));
 }
 
-/* 列表 */
 function addList() {
   const name = prompt("列表名");
   if (!name) return;
@@ -93,7 +83,6 @@ function switchList(name) {
   render();
 }
 
-/* 股票 */
 function addStock() {
   if (!data.current) return alert("先选列表");
   const stock = prompt("股票");
@@ -103,7 +92,6 @@ function addStock() {
   render();
 }
 
-/* 记录 */
 function addRecord() {
   const stock = prompt("股票");
   const price = prompt("价格");
@@ -119,47 +107,37 @@ function addRecord() {
   render();
 }
 
-/* 渲染 */
 function render() {
-  const listsDiv = document.getElementById("lists");
-  const stocksDiv = document.getElementById("stocks");
-  const recordsDiv = document.getElementById("records");
-  const estimateDiv = document.getElementById("estimate");
-
-  listsDiv.innerHTML = "";
-  stocksDiv.innerHTML = "";
-  recordsDiv.innerHTML = "";
-  estimateDiv.innerHTML = "";
+  document.getElementById("lists").innerHTML = "";
+  document.getElementById("stocks").innerHTML = "";
+  document.getElementById("records").innerHTML = "";
 
   document.getElementById("current").innerText = data.current || "无";
 
-  /* 列表 */
   for (let name in data.lists) {
     const btn = document.createElement("button");
     btn.innerText = name;
     btn.onclick = () => switchList(name);
-    listsDiv.appendChild(btn);
+    lists.appendChild(btn);
   }
 
-  /* 股票 */
   if (data.current) {
     data.lists[data.current].forEach(s => {
       const div = document.createElement("div");
       div.innerText = s;
-      stocksDiv.appendChild(div);
+      stocks.appendChild(div);
     });
   }
 
-  /* 记录 */
   data.records.forEach(r => {
     const div = document.createElement("div");
     div.innerText = r.date + " - " + r.stock + " - " + r.price;
-    recordsDiv.appendChild(div);
+    records.appendChild(div);
   });
 
-  /* 预估（简单汇总） */
+  /* 简单预估 */
   let total = data.records.reduce((sum, r) => sum + Number(r.price), 0);
-  estimateDiv.innerText = "总投入：" + total;
+  document.getElementById("estimate").innerText = "总投入：" + total;
 }
 
 render();
