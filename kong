@@ -1,1 +1,129 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<title>基金管理系统</title>
+<style>
+body { font-family: Arial; padding: 20px; }
+button { margin: 5px; }
+.box { border: 1px solid #ccc; padding: 10px; margin-top: 10px; }
+</style>
+</head>
+<body>
 
+<h2>📊 列表管理</h2>
+<button onclick="addList()">➕ 添加列表</button>
+<div id="lists"></div>
+
+<div class="box">
+  <h3>当前列表：<span id="current"></span></h3>
+  <button onclick="addStock()">➕ 添加股票</button>
+  <div id="stocks"></div>
+</div>
+
+<hr>
+
+<h2>🧾 交易记录</h2>
+<button onclick="addRecord()">➕ 添加记录</button>
+<div id="records"></div>
+
+<script>
+// ✅ KONG 表（核心）
+let data = JSON.parse(localStorage.getItem("KONG")) || {
+  lists: {},
+  current: null,
+  records: []
+};
+
+function save() {
+  localStorage.setItem("KONG", JSON.stringify(data));
+}
+
+// ===== 列表 =====
+function addList() {
+  const name = prompt("输入列表名称");
+  if (!name) return;
+
+  data.lists[name] = [];
+  data.current = name;
+  save();
+  render();
+}
+
+function switchList(name) {
+  data.current = name;
+  save();
+  render();
+}
+
+// ===== 股票 =====
+function addStock() {
+  if (!data.current) return alert("先选一个列表");
+
+  const stock = prompt("输入股票代码");
+  if (!stock) return;
+
+  data.lists[data.current].push(stock);
+  save();
+  render();
+}
+
+// ===== 记录 =====
+function addRecord() {
+  const stock = prompt("股票");
+  const price = prompt("价格");
+
+  if (!stock || !price) return;
+
+  data.records.push({
+    stock,
+    price,
+    date: new Date().toLocaleString()
+  });
+
+  save();
+  render();
+}
+
+// ===== 渲染 =====
+function render() {
+  const listsDiv = document.getElementById("lists");
+  const stocksDiv = document.getElementById("stocks");
+  const recordsDiv = document.getElementById("records");
+
+  listsDiv.innerHTML = "";
+  stocksDiv.innerHTML = "";
+  recordsDiv.innerHTML = "";
+
+  document.getElementById("current").innerText = data.current || "无";
+
+  // 列表
+  for (let name in data.lists) {
+    const btn = document.createElement("button");
+    btn.innerText = name;
+    btn.onclick = () => switchList(name);
+    listsDiv.appendChild(btn);
+  }
+
+  // 股票
+  if (data.current) {
+    data.lists[data.current].forEach(s => {
+      const div = document.createElement("div");
+      div.innerText = s;
+      stocksDiv.appendChild(div);
+    });
+  }
+
+  // 记录
+  data.records.forEach(r => {
+    const div = document.createElement("div");
+    div.innerText = `${r.date} - ${r.stock} - ${r.price}`;
+    recordsDiv.appendChild(div);
+  });
+}
+
+render();
+</script>
+
+</body>
+</html>
