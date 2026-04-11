@@ -1,167 +1,192 @@
 <!DOCTYPE html>
-<html lang="zh">
+<html>
 <head>
-<meta charset="UTF-8">
-<title>KONG</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>组合页面</title>
 
 <style>
-html, body {
-  margin: 0;
-  height: 100%;
-  font-family: Arial;
+body{
+  margin:0;
+  font-family:-apple-system;
+  background:#f5f6f8;
 }
 
-/* 上：预估 */
-#top {
-  height: 40vh;
-  overflow: hidden;
-  border-bottom: 1px solid #ccc;
-  padding: 10px;
-  box-sizing: border-box;
+/* ===== 上半部分：预估 ===== */
+#top{
+  height:40vh;
+  overflow:hidden;
+  border-bottom:1px solid #ddd;
+  background:#fff;
 }
 
-/* 下：操作区（滚动） */
-#bottom {
-  height: 60vh;
-  overflow-y: auto;
-  padding: 10px;
-  box-sizing: border-box;
+/* ===== 下半部分：记录（可滚动） ===== */
+#bottom{
+  height:60vh;
+  overflow-y:auto;
+  padding:8px;
 }
 
-button { margin: 5px; }
+/* 通用 */
+h2,h3{ margin:6px 0; }
 
-.box {
-  border: 1px solid #ccc;
-  padding: 8px;
-  margin-top: 10px;
+/* 防止两个系统互相影响 */
+.section{
+  padding:8px;
 }
 </style>
-
 </head>
 
 <body>
 
-<!-- 上：预估 -->
+<!-- ===================== 上：预估系统 ===================== -->
 <div id="top">
-  <h3>预估</h3>
-  <div id="estimate"></div>
+  <div class="section">
+
+    <h3>📊 基金预估</h3>
+
+    <button onclick="addRow()">➕ 添加股票</button>
+
+    <div id="list"></div>
+
+    <div id="total">0%</div>
+
+  </div>
 </div>
 
-<!-- 下：操作 -->
+<!-- ===================== 下：记录系统 ===================== -->
 <div id="bottom">
 
-  <h3>列表管理</h3>
-  <button onclick="addList()">添加列表</button>
-  <div id="lists"></div>
+  <div class="section">
 
-  <div class="box">
-    <h4>当前列表：<span id="current"></span></h4>
-    <button onclick="addStock()">添加股票</button>
-    <div id="stocks"></div>
-  </div>
+    <h3>📒 记录表</h3>
 
-  <div class="box">
-    <h3>记录</h3>
-    <button onclick="addRecord()">添加记录</button>
+    <button onclick="addRecord()">➕ 添加记录</button>
+
     <div id="records"></div>
+
   </div>
 
 </div>
 
 <script>
 
-/* ===== KONG数据表 ===== */
-let data = JSON.parse(localStorage.getItem("KONG")) || {
-  lists: {},
-  current: null,
-  records: []
-};
+//////////////////////////////////////////////////////
+// ========== 上半部分：基金预估系统 ==========
+//////////////////////////////////////////////////////
 
-function save() {
-  localStorage.setItem("KONG", JSON.stringify(data));
+async function getStockData(code){
+  try{
+    let res = await fetch(`https://qt.gtimg.cn/q=${code}`);
+    let buffer = await res.arrayBuffer();
+    let text = new TextDecoder("gbk").decode(buffer);
+    let data = text.split("~");
+
+    let price = parseFloat(data[3]);
+    let yest = parseFloat(data[4]);
+
+    let change = ((price - yest)/yest)*100;
+
+    return {name:data[1], change};
+  }catch{
+    return {name:"-", change:0};
+  }
 }
 
-/* ===== 列表 ===== */
-function addList() {
-  const name = prompt("列表名");
-  if (!name) return;
+function addRow(){
+  let div = document.createElement("div");
 
-  data.lists[name] = [];
-  data.current = name;
-  save();
-  render();
+  div.innerHTML = `
+    <input class="code" placeholder="sh600900">
+    <input class="weight" value="10">
+    <span class="name">--</span>
+    <span class="change">-</span>
+    <span class="impact">-</span>
+    <button onclick="this.parentNode.remove()">删</button>
+  `;
+
+  document.getElementById("list").appendChild(div);
 }
 
-function switchList(name) {
-  data.current = name;
-  save();
-  render();
+async function calculate(){
+
+  let rows = document.querySelectorAll("#list > div");
+  let total = 0;
+
+  for(let r of rows){
+
+    let code = r.querySelector(".code").value;
+    let weight = Number(r.querySelector(".weight").value)/100;
+
+    if(!code) continue;
+
+    let d = await getStockData(code);
+
+    let change = d.change;
+    let impact = change * weight;
+
+    r.querySelector(".name").innerText = d.name;
+    r.querySelector(".change").innerText = change.toFixed(2)+"%";
+    r.querySelector(".impact").innerText = impact.toFixed(2)+"%";
+
+    total += impact;
+  }
+
+  document.getElementById("total").innerText =
+    "总收益：" + total.toFixed(2) + "%";
 }
 
-/* ===== 股票 ===== */
-function addStock() {
-  if (!data.current) return alert("先选列表");
+setInterval(calculate, 5000);
 
-  const stock = prompt("股票");
-  if (!stock) return;
 
-  data.lists[data.current].push(stock);
-  save();
-  render();
-}
+//////////////////////////////////////////////////////
+// ========== 下半部分：记录系统 ==========
+//////////////////////////////////////////////////////
 
-/* ===== 记录 ===== */
-function addRecord() {
-  const stock = prompt("股票");
-  const price = prompt("价格");
-  if (!stock || !price) return;
+let rows = JSON.parse(localStorage.getItem("rows")||"[]");
 
-  data.records.push({
+function addRecord(){
+  let stock = prompt("股票");
+  let price = prompt("价格");
+
+  if(!stock||!price) return;
+
+  rows.push({
     stock,
     price,
-    date: new Date().toLocaleString()
+    time:new Date().toLocaleString()
   });
 
   save();
+}
+
+function save(){
+  localStorage.setItem("rows",JSON.stringify(rows));
   render();
 }
 
-/* ===== 渲染 ===== */
-function render() {
+function render(){
 
-  document.getElementById("lists").innerHTML = "";
-  document.getElementById("stocks").innerHTML = "";
-  document.getElementById("records").innerHTML = "";
+  let box = document.getElementById("records");
+  box.innerHTML = "";
 
-  document.getElementById("current").innerText = data.current || "无";
+  rows.forEach(r=>{
 
-  /* 列表 */
-  for (let name in data.lists) {
-    const btn = document.createElement("button");
-    btn.innerText = name;
-    btn.onclick = () => switchList(name);
-    lists.appendChild(btn);
-  }
+    let div = document.createElement("div");
 
-  /* 股票 */
-  if (data.current) {
-    data.lists[data.current].forEach(s => {
-      const div = document.createElement("div");
-      div.innerText = s;
-      stocks.appendChild(div);
-    });
-  }
+    div.style.background="#fff";
+    div.style.margin="6px 0";
+    div.style.padding="6px";
+    div.style.borderRadius="6px";
 
-  /* 记录 */
-  data.records.forEach(r => {
-    const div = document.createElement("div");
-    div.innerText = `${r.date} - ${r.stock} - ${r.price}`;
-    records.appendChild(div);
+    div.innerHTML = `
+      <div>${r.time}</div>
+      <div>${r.stock} - ${r.price}</div>
+    `;
+
+    box.appendChild(div);
   });
-
-  /* 预估 */
-  let total = data.records.reduce((sum, r) => sum + Number(r.price), 0);
-  document.getElementById("estimate").innerText = "总投入：" + total;
 
 }
 
